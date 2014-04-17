@@ -1,0 +1,59 @@
+\documentclass[twoside,11pt]{article}
+
+% Any additional packages needed should be included after jmlr2e.
+% Note that jmlr2e.sty includes epsfig, amssymb, natbib and graphicx,
+% and defines many common macros, such as 'proof' and 'example'.
+%
+% It also sets the bibliographystyle to plainnat; for more information on
+% natbib citation styles, see the natbib documentation, a copy of which
+% is archived at http://www.jmlr.org/format/natbib.pdf
+
+\usepackage{jmlr2e}
+
+% Definitions of handy macros can go here
+
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+
+% Heading arguments are {volume}{year}{pages}{submitted}{published}{author-full-names}
+
+\jmlrheading{?}{2014}{?-?}{?/??}{?/??}{Jaakko Luttinen}
+
+% Short headings should be running head and authors last names
+
+\ShortHeadings{BayesPy: Variational Bayesian Inference in Python}{Luttinen}
+\firstpageno{1}
+
+\begin{document}
+
+\title{BayesPy: Variational Bayesian Inference in Python}
+
+\author{\name Jaakko Luttinen \email jaakko.luttinen@aalto.fi \\
+       \addr Department of Information and Computer Science\\
+       Aalto University, Finland}
+
+\editor{?}
+
+\maketitle
+
+\begin{abstract}%   <- trailing '%' for backward compatibility of .sty file
+  This paper describes BayesPy.
+\end{abstract}
+
+\begin{keywords}
+  Bayesian Networks
+\end{keywords}
+
+\section{Introduction}
+
+Blaa blaa
+
+% Acknowledgements should go at the end, before appendices and references
+
+\acks{?}
+
+
+\vskip 0.2in
+\bibliography{bibliography.bib}
+
+\end{document}
