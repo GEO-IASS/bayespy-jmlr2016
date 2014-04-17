@@ -6,4 +6,5 @@
 *.blg
 *.log
 *~
+*.out
 auto
