@@ -44,7 +44,67 @@
 
 \section{Introduction}
 
+Bayesian framework provides theoretically solid and consistent way to construct
+models and perform inference.  In practice, however, the inference is usually
+analytically intractable and is therefore based on approximation methods such as
+variational Bayes (VB) \cite{?}, expectation propagation (EP) \cite{?} and
+Markov chain Monte Carlo (MCMC) \cite{?}.  Deriving and implementing the
+formulas for the approximation method is often straightforward but tedious, time
+consuming and error prone.  Thus, automatization of this process ..
+
+
+BayesPy is a Python package providing tools for constructing Bayesian models and
+performing variational Bayesian inference easily and efficiently.  It is based
+on variational message passing (VMP) framework which defines a simple and local
+message passing protocol \cite{?}.  This enables implementation of small general
+modules that can be used as building blocks for large complex models.  BayesPy
+offers a comprehensive collection of built-in blocks that can be used to build a
+wide range of models.  It is written for Python 3 and released under the GNU
+General Public License v3.0 (GPLv3).
+
+
+Several other projects have similar goals for making Bayesian inference easier
+and faster for the users.  VB inference is available in Bayes Blocks \cite{?},
+VIBES \cite{?} and Infer.NET \cite{?}.  Bayes Blocks is an open-source
+C++/Python package but it is limited to scalar Gaussian nodes, a few nonlinear
+functions and fully factorial posterior approximation.  VIBES is an old software
+package for Java, released under the revised BSD license, but it is no longer
+actively developed.  VIBES has been replaced by Infer.NET, which supports
+
+
+\section{Design and Features}
+
+- numpy, scipy, matplotlib, h5py
+
+- documentation
+
+- installation
+
+- repository
+
+- unit tests
+
+- parameter expansion
+
+- missing values
+
+- examples: PCA, LSSM, HMM, mixture models
+
 Blaa blaa \cite{Luttinen:2013}.
+
+
+\section{Example}
+
+- example
+
+\section{Conclusion and Future Work}
+
+- future work
+-- ep, gibbs
+-- ml, map
+
+
+
 
 % Acknowledgements should go at the end, before appendices and references
 
@@ -55,3 +115,9 @@ Blaa blaa \cite{Luttinen:2013}.
 \bibliography{bibliography/bibliography.bib}
 
 \end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-PDF-mode: t
+%%% TeX-master: t
+%%% End: 
