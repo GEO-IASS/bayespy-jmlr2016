@@ -44,8 +44,8 @@
 
 \begin{abstract}%   <- trailing '%' for backward compatibility of .sty file
   BayesPy is an open-source Python software package for performing variational
-  Bayesian inference.  It supports conjugate exponential family models by
-  utilizing the variational message passing framework.  By removing the tedious
+  Bayesian inference.  It is based on the variational message passing framework
+  and supports conjugate exponential family models.  By removing the tedious
   task of implementing the variational Bayesian update equations, the user can
   construct models faster and in a less error-prone way.  Simple syntax,
   flexible model construction and efficient inference make BayesPy suitable for
@@ -53,7 +53,8 @@
 \end{abstract}
 
 \begin{keywords}
-  variational Bayes
+  Variational Bayes, variational message passing, Python, probabilistic
+  programming
 \end{keywords}
 
 \section{Introduction}
@@ -238,16 +239,16 @@ In order to demonstrate BayesPy, this section solves an extremely simple problem
 but which includes the main steps of using BayesPy.  The task is to estimate the
 unknown mean and precision parameters of a Gaussian distribution given ten
 observations.  Thus, the likelihood function is Gaussian:
-\begin{align}
+\begin{align*}
   p(y_1,\ldots,y_{10}|\mu,\tau) &= \prod^{10}_{n=1}\mathcal{N}(y_n | \mu, \tau),
-\end{align}
+\end{align*}
 where the Gaussian distribution is parameterized by precision instead of
 variance.  The unknown mean $\mu$ and precision $\tau$ are given broad Gaussian
 and gamma priors, respectively:
-\begin{align}
+\begin{align*}
   p(\mu) &= \mathcal{N}(\mu|0, 10^{-6}) & p(\tau) &= \mathcal{G}(\tau|10^{-6},
   10^{-6})
-\end{align}
+\end{align*}
 Figure~\ref{fig:graphical_model} shows the graphical model of this simple model.
 The model is constructed in BayesPy by creating nodes:
 \begin{lstlisting}
@@ -264,7 +265,8 @@ The number of observations is given as plates which define the number of
 repetitions.  Note that the syntax of the model construction is similar to the
 mathematical formulation which defines the conditional distributions for each
 variable.  Thus, it is easy to understand the model from the Python code.  After
-the model has been constructed, data is provided by observing nodes:
+the model has been constructed, some nodes are marked as observed and given
+data:
 \begin{lstlisting}
 y.observe([4.5, 3.9, 6.3, 5.6, 4.9, 2.8, 7.4, 6.1, 4.8, 2.1])
 \end{lstlisting}
@@ -310,7 +312,7 @@ approximate posterior distributions.
   \label{fig:posterior}
 \end{figure}
 
-\section{Conclusion and Future Work}
+\section{Conclusions}
 
 BayesPy provides a simple and efficient way to construct conjugate exponential
 family models and to find the variational Bayesian posterior approximation in
