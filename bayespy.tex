@@ -294,9 +294,11 @@ bpplt.pyplot.figure()
 bpplt.pdf(Q[tau], np.linspace(0, 2, num=300))
 bpplt.pyplot.show()
 \end{lstlisting}
-Note that the standard \texttt{pyplot} module of Matplotlib is available at the
-\texttt{plot} module of BayesPy.  Figure~\ref{fig:posterior} shows the resulting
-approximate posterior distributions.
+Figure~\ref{fig:posterior} shows the resulting approximate posterior
+distributions.  The module \texttt{bayespy.plot} contains functions for simple
+plotting tasks, such as plotting the probability density function or the Hinton
+diagram of a variable.  Note that the standard \texttt{pyplot} module of
+Matplotlib is available at the \texttt{plot} module of BayesPy.
 \begin{figure}
   \begin{center}
     \begin{subfigure}[b]{0.4\textwidth}
