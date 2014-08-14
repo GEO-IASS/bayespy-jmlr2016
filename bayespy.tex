@@ -246,8 +246,8 @@ where the Gaussian distribution is parameterized by precision instead of
 variance.  The unknown mean $\mu$ and precision $\tau$ are given broad Gaussian
 and gamma priors, respectively:
 \begin{align*}
-  p(\mu) &= \mathcal{N}(\mu|0, 10^{-6}) & p(\tau) &= \mathcal{G}(\tau|10^{-6},
-  10^{-6})
+  p(\mu) &= \mathcal{N}(\mu|0, 10^{-6}), & p(\tau) &= \mathcal{G}(\tau|10^{-6},
+  10^{-6}).
 \end{align*}
 Figure~\ref{fig:graphical_model} shows the graphical model of this simple model.
 The model is constructed in BayesPy by creating nodes:
