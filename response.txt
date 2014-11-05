@@ -1,0 +1,16 @@
+Running the linear regression example, halts (command prompt does not return) on 
+
+from bayespy.nodes import GaussianARD
+
+when I do 
+
+from bayespy.nodes import GaussianARD, Gamma
+
+the command prompt responds with
+
+SOMETHING
+
+
+This is a nasty bug in matplotlib 1.4.0 and BayesPy tries to use a
+workaround. Apparently, it does not work on Python shell, but works on IPython.
+So, this should work if you install matplotlib!=1.4.0.
