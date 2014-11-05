@@ -1,0 +1,214 @@
+The reviews for your paper include a series of significant reservations and
+include suggestions for improvement. Please consider the reviews before
+considering a re-submission. Clearly, you have produced a nice package that
+would make a nice contribution to the machine learning community, but there are
+questions to address particularly over the problem with Ubuntu and the “number
+of omissions” mentioned in one of the reviews. I hope that you find the feedback
+worthwhile and that you will seriously consider submitting again. It is my
+experience that papers are rarely accepted first-time to this journal track.
+
+
+REVIEW 1
+========
+
+This paper describes the BayesPy software package for performing variational
+message passing in exponential family models.
+
+The paper does not cover any new technical developments, but describes the
+features of the software and gives a small example.  On this basis, I will
+review the paper only on how useful it is at describing the package itself.
+
+The main concerns when selected an inference engine are ease-of-use, speed,
+scope (what models can be constructed, and for which of these can inference be
+run successfully), extensibility and correctness.
+
+Ease-of-use 
+-----------
+
+The syntax looks relatively easy to use, but uses some non-standard approaches
+e.g. for handling plates.  The alternative here would be to go with a
+probabilistic programming syntax, like PyMC or Church.  What is the syntax for
+gating nodes?
+
+Speed
+-----
+
+No information is given in the paper as to the speed of execution of the
+package.  This is an important consideration when selecting an inference engine
+and it's omission is unhelpful.  For example, the authors could add a comparison
+table giving speeds of PyMC, Infer.NET, STAN etc. on models which both systems
+support.
+
+Scope
+-----
+
+The scope of the system, in terms of the building blocks available, is described
+in Section 2, although the paper would benefit from a more exhaustive discussion
+of what is supported (and why) and also particular known models that are not
+supported.
+
+What is not clear from the paper is what size or complexity of model can be
+constructed.  The example given is extremely simple.  I would think that a few
+more examples should be added, including at least one real example, to
+demonstrate the scope at the model level.  I appreciate the Luttinen 2013/2014
+citations but the paper needs to contain more examples in order to stand alone.
+
+It would also be useful to know how the VMP algorithm is scheduled e.g. are
+parallel or sequential schedules supported?  Can I switch between them?
+
+Extensibility & Correctness
+---------------------------
+
+It is good to see that the system is both extensible and has a unit testing
+framework to aid proving correctness.
+
+Summary
+-------
+
+This looks to be a good and useful software package.  However, this paper has a
+number of omissions (listed above) that would make it difficult for the reader
+to assess whether the package would be useful for their particular application.
+I would recommend the authors make a major revision to add in these missing
+details.
+
+
+
+REVIEW 2
+========
+
+First of all, I have to commend the authors with the documentation, typically
+something of an afterthought, but the documentation of this package is
+impressive. Just one small comment; the index should not be two column, since
+entries overlap now.
+
+However, having said this, I doubt the instructions are sufficient for anything
+but Ubuntu >= 12.10. By the way, why is v12.10 required, while support for 12.10
+expires soon, while v12.04 has another 3 years of support available? Regardless,
+I upgraded an Ubuntu 12.04 machine to v14.04, but did not manage to install the
+package (see below for a log). This means that I have not been able to test any
+of the software.
+
+I recommend having a standalone executable version available for each of the 3
+leading operating systems that include all dependencies. I am not sure whether
+an interactive version could be built this way, but it is certainly possible to
+create a version that takes as input a BayesPy model specification and runs the
+model so results can be inspected.
+
+At first sight, I thought this paper would not be suitable for JMLR because it
+does not involve machine learning. I was surprised to learn that Winn and Bishop
+(2005) was accepted for this same journal though. However, I would not encourage
+methods of Bayesian inference in graphical models for JMLR, so I am conflicted
+as to what to advice. Regardless, I think the installation glitch is something
+that can be solved, and the package appears sufficiently polished that it
+warrants a publication somewhere -- though I am just not sure whether JMLR is
+the right place.
+
+The paper is well written, easy to follow and clear in the description of the
+software. However, the section labelled "Design and Features" does not contains
+much about the design of the package, so it would be more accurately be labelled
+"Features".
+
+BayesPy code is easy to access on GitHub and comes with an open source license.
+
+It is not clear how significant the contribution is -- it certainly looks like a
+nice platform for learning the basics of variational inference, but no evidence
+of an active user community has been provided apart from contributions (through
+two references) by the author of the software.
+
+The paper mentions a number of related packages that presumably can perform the
+same analyses. However, performance comparisons with these packages is not given
+leaving it unclear how efficient this implementation is.
+
+
+
+After going through the installation instructions:
+
+virtualenv -p python3 --system-site-packages ENV
+source ENV/bin/activate
+sudo apt-get build-dep python3-numpy
+sudo apt-get build-dep python3-scipy
+sudo apt-get build-dep python3-matplotlib
+sudo apt-get build-dep python-h5py
+pip install distribute --upgrade
+pip install numpy --upgrade
+pip install scipy --upgrade
+pip install matplotlib --upgrade
+pip install h5py
+pip install bayespy
+
+Running the linear regression example, halts (command prompt does not return) on 
+
+from bayespy.nodes import GaussianARD
+
+when I do 
+
+from bayespy.nodes import GaussianARD, Gamma
+
+the command prompt responds with
+
+SOMETHING
+
+This is with Python 3.4.0 (default, Apr 11 2014, 13:05:11), Ubuntu 14.04 LTS
+
+Second attempt:
+
+>>> from bayespy.nodes import GaussianARD, Gamma
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ImportError: No module named 'bayespy'
+
+Running "pip install bayespy" again now leads to
+Downloading/unpacking bayespy
+  Downloading bayespy-0.2.1.tar.gz (309kB): 309kB downloaded
+  Running setup.py (path:/home/xxxxxxxx/ENV/build/bayespy/setup.py) egg_info for package bayespy
+    
+Requirement already satisfied (use --upgrade to upgrade): numpy>=1.8.0 in /usr/lib/python3/dist-packages (from bayespy)
+Downloading/unpacking scipy>=0.13.0 (from bayespy)
+  Downloading scipy-0.14.0.tar.gz (10.2MB): 10.2MB downloaded
+  Running setup.py (path:/home/xxxxxxx/ENV/build/scipy/setup.py) egg_info for package scipy
+    
+    warning: no previously-included files matching '*_subr_*.f' found under directory 'scipy/linalg/src/id_dist/src'
+    no previously-included directories found matching 'scipy/special/tests/data/boost'
+    no previously-included directories found matching 'scipy/special/tests/data/gsl'
+    no previously-included directories found matching 'doc/build'
+    no previously-included directories found matching 'doc/source/generated'
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+    warning: no previously-included files matching '*~' found anywhere in distribution
+    warning: no previously-included files matching '*.bak' found anywhere in distribution
+    warning: no previously-included files matching '*.swp' found anywhere in distribution
+    warning: no previously-included files matching '*.pyo' found anywhere in distribution
+Downloading/unpacking matplotlib>=1.2.0 (from bayespy)
+  HTTP error 503 while getting https://pypi.python.org/packages/source/m/matplotlib/matplotlib-1.4.0.tar.gz#md5=1daf7f2123d94745feac1a30b210940c (from https://pypi.python.org/simple/matplotlib/)
+Cleaning up...
+Exception:
+Traceback (most recent call last):
+  File "/home/xxxxxxx/ENV/lib/python3.4/site-packages/pip/basecommand.py", line 122, in main
+    status = self.run(options, args)
+  File "/home/xxxxxxx/ENV/lib/python3.4/site-packages/pip/commands/install.py", line 278, in run
+    requirement_set.prepare_files(finder, force_root_egg_info=self.bundle, bundle=self.bundle)
+  File "/home/xxxxxxx/ENV/lib/python3.4/site-packages/pip/req.py", line 1197, in prepare_files
+    do_download,
+  File "/home/xxxxxxx/ENV/lib/python3.4/site-packages/pip/req.py", line 1375, in unpack_url
+    self.session,
+  File "/home/xxxxxxx/ENV/lib/python3.4/site-packages/pip/download.py", line 547, in unpack_http_url
+    resp.raise_for_status()
+  File "/home/xxxxxxx/ENV/lib/python3.4/site-packages/pip/_vendor/requests/models.py", line 773, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+pip._vendor.requests.exceptions.HTTPError: 503 Server Error: backend read error
+
+Storing debug log for failure in /home/xxxxxxx/.pip/pip.log
+
+
+
+
+REVIEW 3
+========
+
+The submission "BayesPy: Variational Bayesian Inference in Python" outlines a
+new Python package that performs Bayesian inference using variational
+methods. This software is an important contribution to both the applied
+statistical community and to the Python community, as there is a dearth of good
+software for Bayesian inference, given its rising popularity. Hence, I believe
+its publication in JMLR will facilitate the uptake of this newer form of
+Bayesian inference among non-specialists. The paper itself is clear and well
+organized.
