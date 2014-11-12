@@ -1,0 +1,16 @@
+
+Create virtual environment:
+
+virtualenv ENV
+
+Add MONO_PATH to ENV/bin/activate
+
+source ENV/bin/activate
+
+pip install bayespy
+
+Run using mono or python:
+
+mono mog_infernet.exe
+
+python mog_bayespy.py
