@@ -19,8 +19,14 @@ namespace MicrosoftResearch.Infer.Tutorials
 		public Variable<int> vD = null;
 		public Variable<int> vM = null;
 		public VariableArray2D<double> vData = null;
+                //* DEFAULT SCALAR VERSION
+		public VariableArray2D<double> vW = null;
+		public VariableArray2D<double> vZ = null;
+                //*/
+                /* MY VECTOR VERSION
 		public VariableArray<Vector> vW = null;
 		public VariableArray<Vector> vZ = null;
+                //*/
 		public VariableArray2D<double> vT = null;
 		public VariableArray2D<double> vU = null;
 		public VariableArray<double> vMu = null;
@@ -38,11 +44,20 @@ namespace MicrosoftResearch.Infer.Tutorials
 		public Range rD = null;
 		public Range rM = null;
 
+            // Variable for computing the lower bound
+                public Variable<bool> evidence = Variable.Bernoulli(0.5).Named("evidence");
+
 		/// <summary>
 		/// Model constructor
 		/// </summary>
 		public BayesianPCAModel()
 		{
+
+                    // Stuff for the lower bound / evidence
+                    IfBlock block = Variable.If(evidence);
+
+                    // Start model
+                    
 			// The various dimensions will be set externally...
 			vN = Variable.New<int>().Named("NumObs");
 			vD = Variable.New<int>().Named("NumFeats");
@@ -60,7 +75,7 @@ namespace MicrosoftResearch.Infer.Tutorials
 			// a precision which will be learnt. This is a form of Automatic
 			// Relevance Determination (ARD). The larger the precisions become, the
 			// less important that row in the mixing matrix is in explaining the data
-                        //* MY VERSION WITH VECTORS
+                        /* MY VERSION WITH VECTORS
 			vAlpha = Variable.Array<double>(rM).Named("Alpha");
 			vW = Variable.Array<Vector>(rD).Named("W");
 			vAlpha[rM] = Variable.Random<double, Gamma>(priorAlpha).ForEach(rM);
@@ -73,7 +88,7 @@ namespace MicrosoftResearch.Infer.Tutorials
 			// Multiply the latent variables with the mixing matrix...
 			vT = Variable.InnerProduct(vZ, vW).Named("T");
                         //*/
-                        /* ORIGINAL MEAN FIELD VERSION
+                        //* ORIGINAL MEAN FIELD VERSION
 			vAlpha = Variable.Array<double>(rM).Named("Alpha");
 			vW = Variable.Array<double>(rM, rD).Named("W");
 			vAlpha[rM] = Variable.Random<double, Gamma>(priorAlpha).ForEach(rM);
@@ -94,8 +109,14 @@ namespace MicrosoftResearch.Infer.Tutorials
 			vPi[rD] = Variable.Random<double, Gamma>(priorPi).ForEach(rD);
 			// ... to give the likelihood of observing the data
 			vData[rN, rD] = Variable.GaussianFromMeanAndPrecision(vU[rN, rD], vPi[rD]);
+
+                        // End evidence/lowerbound block
+                        block.CloseBlock();
+                        
 			// Inference engine
 			engine = new InferenceEngine(new VariationalMessagePassing());
+
+                        
 			return;
 		}
 	}
@@ -106,9 +127,9 @@ namespace MicrosoftResearch.Infer.Tutorials
 	[Example("Applications", "A Bayesian Principal Components Analysis example")]
 	public class BayesianPCA
 	{
-            static int numComp = 2;
-            static int numFeat = 4;
-            static int numObs = 10;
+            static int numComp = 3;
+            static int numFeat = 10;
+            static int numObs = 100;
 
             static void Main()
                 {
@@ -143,9 +164,18 @@ namespace MicrosoftResearch.Infer.Tutorials
 			bpca.priorAlpha.ObservedValue = Gamma.FromShapeAndRate(2.0, 2.0);
 			// Initialize the W marginal to break symmetry
 			bpca.vW.InitialiseTo(randomGaussianArray(bpca.vM.ObservedValue, bpca.vD.ObservedValue));
-			// Infer the marginals
-                        //System.Timers.Time timer = 
-			bpca.engine.NumberOfIterations = 100;
+                        double logEvidence = 0;
+                        for (int j=0; j < 1000; j++)
+                        {
+                            bpca.engine.NumberOfIterations = j+1;
+                            // Infer the marginals
+                            bpca.engine.Infer<IDistribution<double[,]>>(bpca.vW);
+                            bpca.engine.Infer<IDistribution<double[]>>(bpca.vMu);
+                            bpca.engine.Infer<IDistribution<double[]>>(bpca.vPi);
+                            // Show lower bound
+                            logEvidence = bpca.engine.Infer<Bernoulli>(bpca.evidence).LogOdds;
+                            Console.WriteLine("The lower bound: {0}", logEvidence);
+                        }
 			IDistribution<double[,]> wMarginal = bpca.engine.Infer<IDistribution<double[,]>>(bpca.vW);
 			IDistribution<double[]> muMarginal = bpca.engine.Infer<IDistribution<double[]>>(bpca.vMu);
 			IDistribution<double[]> piMarginal = bpca.engine.Infer<IDistribution<double[]>>(bpca.vPi);
@@ -168,6 +198,7 @@ namespace MicrosoftResearch.Infer.Tutorials
 			printVectorToConsole(inferredPi);
                         Console.Write("Distribution of W\n" + bpca.engine.Infer(bpca.vW));
 			Console.WriteLine();
+
 		}
 
 		/// <summary>
