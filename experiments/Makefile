@@ -1,6 +1,5 @@
 
-INFERNET_PATH=$(HOME)/Workspace/Infer.NET/Bin
-INFERNET_FILES=$(INFERNET_PATH)/Infer.Runtime.dll,$(INFERNET_PATH)/Infer.Compiler.dll
+INFERNET_FILES=$(MONO_PATH)/Infer.Runtime.dll,$(MONO_PATH)/Infer.Compiler.dll
 
 all: pca_infernet.exe
 
