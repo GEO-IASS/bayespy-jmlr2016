@@ -39,26 +39,27 @@ def mog_model(N, K, D):
     # Construct the Gaussian mixture model
 
     # K prior weights (for components)
-    alpha = nodes.Dirichlet(1e-3*np.ones(K),
+    alpha = nodes.Dirichlet(1.0*np.ones(K),
                             name='alpha')
     # N K-dimensional cluster assignments (for data)
     z = nodes.Categorical(alpha,
                           plates=(N,),
                           name='z')
     # K D-dimensional component means
-    X = nodes.Gaussian(np.zeros(D), 0.01*np.identity(D),
-                       plates=(K,),
-                       name='X')
+    mu = nodes.Gaussian(np.zeros(D), 0.01*np.identity(D),
+                        plates=(K,),
+                        name='mu')
     # K D-dimensional component covariances
-    Lambda = nodes.Wishart(D, 0.01*np.identity(D),
+    Lambda = nodes.Wishart(100, 0.01*np.identity(D),
                            plates=(K,),
                            name='Lambda')
     # N D-dimensional observation vectors
-    Y = nodes.Mixture(z, nodes.Gaussian, X, Lambda, name='Y')
+    Y = nodes.Mixture(z, nodes.Gaussian, mu, Lambda, name='Y')
 
+    # Break symmetry
     z.initialize_from_random()
 
-    return VB(Y, X, Lambda, z, alpha)
+    return VB(Y, mu, Lambda, z, alpha)
 
 
 def generate_data(N):
@@ -86,40 +87,18 @@ def generate_data(N):
     return y
 
 
-def run(N=50, K=5, D=2):
+def run(N=300, K=2, D=2):
 
     # Construct model
-    Q = gaussianmix_model(N,K,D)
+    Q = mog_model(N,K,D)
 
     # Observe data
     y = generate_data(N)
     Q['Y'].observe(y)
 
     # Run inference
-    Q.update(repeat=30)
+    Q.update(repeat=50)
 
-    ## # Run predictive model
-    ## zh = nodes.Categorical(Q['alpha'], name='zh')
-    ## Yh = nodes.Mixture(zh, nodes.Gaussian, Q['X'], Q['Lambda'], name='Yh')
-    ## zh.update()
-
-    ## # Plot predictive pdf
-    ## N1 = 400
-    ## N2 = 400
-    ## x1 = np.linspace(-3, 15, N1)
-    ## x2 = np.linspace(-3, 15, N2)
-    ## xh = misc.grid(x1, x2)
-    ## lpdf = Yh.integrated_logpdf_from_parents(xh, 0)
-    ## pdf = np.reshape(np.exp(lpdf), (N2,N1))
-    ## plt.clf()
-    ## plt.contourf(x1, x2, pdf, 100)
-    ## plt.scatter(y[:,0], y[:,1])
-    ## print('integrated pdf:', np.sum(pdf)*(18*18)/(N1*N2))
-
-    ## Q['X'].show()
-    ## Q['alpha'].show()
-
-    ## plt.show()
 
 if __name__ == '__main__':
     run()
