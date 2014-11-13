@@ -80,9 +80,9 @@ def generate_data(N):
     y = np.zeros((N,2))
     for n in range(N):
         if nodes.Bernoulli(pi).random():
-            y[n] = Gaussian(mu1, Lambda1).random()
+            y[n] = nodes.Gaussian(mu1, Lambda1).random()
         else:
-            y[n] = Gaussian(mu1, Lambda1).random()
+            y[n] = nodes.Gaussian(mu2, Lambda2).random()
 
     return y
 
