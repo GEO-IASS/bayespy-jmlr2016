@@ -31,7 +31,7 @@ namespace MicrosoftResearch.Infer.Tutorials
             {
                 // Stuff for the lower bound / evidence
                 evidence = Variable.Bernoulli(0.5).Named("evidence");
-                //IfBlock block = Variable.If(evidence);
+                IfBlock block = Variable.If(evidence);
 
                 // Define a range for the number of mixture components
                 K = Variable.New<int>().Named("NumComps");
@@ -66,7 +66,7 @@ namespace MicrosoftResearch.Infer.Tutorials
                 }
 
                 // End evidence/lowerbound block
-                //block.CloseBlock();
+                block.CloseBlock();
                     
                 ie = new InferenceEngine(new VariationalMessagePassing());
             }
