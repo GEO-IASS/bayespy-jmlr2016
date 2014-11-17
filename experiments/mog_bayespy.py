@@ -50,7 +50,7 @@ def mog_model(N, K, D):
                         plates=(K,),
                         name='mu')
     # K D-dimensional component covariances
-    Lambda = nodes.Wishart(100, 0.01*np.identity(D),
+    Lambda = nodes.Wishart(D, D*np.identity(D),
                            plates=(K,),
                            name='Lambda')
     # N D-dimensional observation vectors
@@ -60,6 +60,12 @@ def mog_model(N, K, D):
     z.initialize_from_random()
 
     return VB(Y, mu, Lambda, z, alpha)
+
+
+def load_data_iris():
+    return np.genfromtxt('mog_data/bezdekIris.data',
+                         usecols=tuple(range(0,4)),
+                         delimiter=',')
 
 
 def generate_data(N):
@@ -87,17 +93,23 @@ def generate_data(N):
     return y
 
 
-def run(N=300, K=2, D=2):
+def run(K=10):
+
+    # Get data
+    #y = generate_data(N)
+    y = load_data_iris()
 
     # Construct model
+    (N, D) = np.shape(y)
     Q = mog_model(N,K,D)
 
     # Observe data
-    y = generate_data(N)
     Q['Y'].observe(y)
 
     # Run inference
     Q.update(repeat=50)
+
+    print(Q['alpha'].u[0])
 
 
 if __name__ == '__main__':

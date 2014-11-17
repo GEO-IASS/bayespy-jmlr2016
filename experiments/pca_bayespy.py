@@ -39,18 +39,30 @@ import bayespy.plot as bpplt
 def model(M, N, D):
     # Construct the PCA model with ARD
 
-    # ARD
-    alpha = nodes.Gamma(1e-2,
-                        1e-2,
-                        plates=(D,),
-                        name='alpha')
+    if False:
+        # ARD
+        alpha = nodes.Gamma(1e-2,
+                            1e-2,
+                            plates=(D,),
+                            name='alpha')
+        # Loadings
+        W = nodes.GaussianARD(0,
+                              alpha,
+                              shape=(D,),
+                              plates=(M,1),
+                              name='W')
+    else:
 
-    # Loadings
-    W = nodes.GaussianARD(0,
-                          alpha,
-                          shape=(D,),
-                          plates=(M,1),
-                          name='W')
+        # ARD
+        alpha = nodes.Wishart(D,
+                              D*np.identity(D),
+                              name='alpha')
+
+        # Loadings
+        W = nodes.Gaussian(np.zeros(D),
+                           alpha,
+                           plates=(M,1),
+                           name='W')
 
     # States
     X = nodes.GaussianARD(0,
@@ -65,6 +77,7 @@ def model(M, N, D):
 
     # Noise
     tau = nodes.Gamma(1e-2, 1e-2,
+                      plates=(M,1),
                       name='tau')
 
     # Noisy observations
@@ -74,25 +87,32 @@ def model(M, N, D):
     return (Y, F, W, X, tau, alpha)
 
 
+def generate_data(M, N, D):
+    W = np.random.randn(M, D)
+    return np.dot(W, np.random.randn(D, N)) + 1.0*np.random.randn(M, N)
+
+
 @bpplt.interactive
-def run(M=10, N=100, D_y=3, D=5, seed=42, rotate=False, maxiter=100, debug=False, plot=True):
+def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=100, debug=False, plot=True):
 
     if seed is not None:
         np.random.seed(seed)
     
     # Generate data
-    w = np.random.normal(0, 1, size=(M,1,D_y))
-    x = np.random.normal(0, 1, size=(1,N,D_y))
-    f = misc.sum_product(w, x, axes_to_sum=[-1])
-    y = f + np.random.normal(0, 0.2, size=(M,N))
+    #w = np.random.normal(0, 1, size=(M,1,D_y))
+    #x = np.random.normal(0, 1, size=(1,N,D_y))
+    #f = misc.sum_product(w, x, axes_to_sum=[-1])
+    #y = f + np.random.normal(0, 0.2, size=(M,N))
+    y = generate_data(M, N, D)
 
     # Construct model
     (Y, F, W, X, tau, alpha) = model(M, N, D)
 
-    # Data with missing values
-    mask = random.mask(M, N, p=0.5) # randomly missing
-    y[~mask] = np.nan
-    Y.observe(y, mask=mask)
+    ## # Data with missing values
+    ## mask = random.mask(M, N, p=0.5) # randomly missing
+    ## y[~mask] = np.nan
+    ## Y.observe(y, mask=mask)
+    Y.observe(y)
 
     # Construct inference machine
     Q = VB(Y, W, X, tau, alpha)
@@ -119,12 +139,12 @@ def run(M=10, N=100, D_y=3, D=5, seed=42, rotate=False, maxiter=100, debug=False
         # Use standard VB-EM alone
         Q.update(repeat=maxiter)
 
-    # Plot results
-    if plot:
-        plt.figure()
-        bpplt.timeseries_normal(F, scale=2)
-        bpplt.timeseries(f, color='g', linestyle='-')
-        bpplt.timeseries(y, color='r', linestyle='None', marker='+')
+    ## # Plot results
+    ## if plot:
+    ##     plt.figure()
+    ##     bpplt.timeseries_normal(F, scale=2)
+    ##     bpplt.timeseries(f, color='g', linestyle='-')
+    ##     bpplt.timeseries(y, color='r', linestyle='None', marker='+')
 
 
 if __name__ == '__main__':

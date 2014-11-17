@@ -19,35 +19,40 @@ namespace MicrosoftResearch.Infer.Tutorials
 
         public Variable<int> K = null;
         public Variable<int> N = null;
+        public Variable<int> D = null;
         public Range k = null;
         public Range n = null;
+        public Range d = null;
 
         public InferenceEngine ie = null;
 
         // Variable for computing the lower bound
         public Variable<bool> evidence = null;
 
-        public MixtureOfGaussiansModel()
+        public MixtureOfGaussiansModel(int N, int K, int D)
             {
                 // Stuff for the lower bound / evidence
                 evidence = Variable.Bernoulli(0.5).Named("evidence");
                 IfBlock block = Variable.If(evidence);
 
                 // Define a range for the number of mixture components
-                K = Variable.New<int>().Named("NumComps");
-                N = Variable.New<int>().Named("NumObs");
+                //K = Variable.New<int>().Named("NumComps");
+                //N = Variable.New<int>().Named("NumObs");
+                //D = Variable.New<int>().Named("NumDims");
                 k = new Range(K).Named("k");
                 n = new Range(N).Named("n");
+                d = new Range(D).Named("d");
 
                 // Mixture component means
                 means = Variable.Array<Vector>(k).Named("means");			
                 means[k] = Variable.VectorGaussianFromMeanAndPrecision(
-                    Vector.FromArray(0.0,0.0),
-                    PositiveDefiniteMatrix.IdentityScaledBy(2,0.01)).ForEach(k);
+                    Vector.Zero(d.SizeAsInt),
+                    PositiveDefiniteMatrix.IdentityScaledBy(d.SizeAsInt,0.01)).ForEach(k);
 	
                 // Mixture component precisions
                 precs = Variable.Array<PositiveDefiniteMatrix>(k).Named("precs");
-                precs[k] = Variable.WishartFromShapeAndScale(100.0, PositiveDefiniteMatrix.IdentityScaledBy(2,0.01)).ForEach(k);
+                precs[k] = Variable.WishartFromShapeAndRate(d.SizeAsInt,
+                                                            PositiveDefiniteMatrix.IdentityScaledBy(d.SizeAsInt,d.SizeAsInt)).ForEach(k);
 			
                 // Mixture weights 
                 weights = Variable.Dirichlet(k, new double[] { 1, 1 }).Named("weights");	
@@ -87,18 +92,22 @@ namespace MicrosoftResearch.Infer.Tutorials
         public void Run()
             {
                 // Start model
-                MixtureOfGaussiansModel mog = new MixtureOfGaussiansModel();
+                int K = 2;
+                int N = 300;
+                int D = 2;
+                
+                MixtureOfGaussiansModel mog = new MixtureOfGaussiansModel(N, K, D);
 
                 // Attach some generated data
-                mog.K.ObservedValue = 2;
-                mog.N.ObservedValue = 300;
-                mog.data.ObservedValue = GenerateData(mog.N.ObservedValue);
+                //mog.K.ObservedValue = 2;
+                //mog.N.ObservedValue = 300;
+                mog.data.ObservedValue = GenerateData(N);
 
                 // Initialise messages randomly so as to break symmetry
-                Discrete[] zinit = new Discrete[mog.N.ObservedValue];		
+                Discrete[] zinit = new Discrete[N];		
                 for (int i = 0; i < zinit.Length; i++) 
-                    zinit[i] = Discrete.PointMass(Rand.Int(mog.K.ObservedValue), 
-                                                  mog.K.ObservedValue);
+                    zinit[i] = Discrete.PointMass(Rand.Int(K), 
+                                                  K);
                 mog.z.InitialiseTo(Distribution<int>.Array(zinit)); 
 
                 // The inference
