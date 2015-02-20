@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright (C) 2011,2012 Jaakko Luttinen
+# Copyright (C) 2011-2015 Jaakko Luttinen
 #
 # This file is licensed under Version 3.0 of the GNU General Public
 # License. See LICENSE for a text of the license.
@@ -21,17 +21,23 @@
 # along with BayesPy.  If not, see <http://www.gnu.org/licenses/>.
 ######################################################################
 
+import os
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 #import time
 
 #from bayespy.utils import misc
 #import bayespy.plot as myplt
 from bayespy import nodes
 from bayespy.inference import VB
+from bayespy.utils import random
+
 
 def mog_model(N, K, D):
+    """
+    Construct a mixture of Gaussians model
+    """
     # N = number of data vectors
     # K = number of clusters
     # D = dimensionality
@@ -62,56 +68,126 @@ def mog_model(N, K, D):
     return VB(Y, mu, Lambda, z, alpha)
 
 
-def load_data_iris():
-    return np.genfromtxt('mog_data/bezdekIris.data',
-                         usecols=tuple(range(0,4)),
-                         delimiter=',')
+## def load_data_iris():
+##     return np.genfromtxt('mog_data/bezdekIris.data',
+##                          usecols=tuple(range(0,4)),
+##                          delimiter=',')
 
 
-def generate_data(N):
-    # Generate data
-    #
-    # This is really inefficient but easy to read. Efficiency isn't important in
-    # generating the data.
+def generate_data(N, D, K, seed=1):
+    """
+    Generate data from a mixture of Gaussians model
+    """
 
-    # True parameters
-    mu1 = np.array([2.0, 3.0])
-    mu2 = np.array([7.0, 5.0])
-    Lambda1 = np.array([[3.0, 0.2],
-                        [0.2, 2.0]])
-    Lambda2 = np.array([[2.0, 0.4],
-                        [0.4, 4.0]])
-    pi = 0.6
+    np.random.seed(seed)
 
-    y = np.zeros((N,2))
+    mu = np.random.randn(K, D)
+    # Lambda is actually precision matrix (inverse covariance)
+    Lambda = random.covariance(D, size=K)
+    pi = random.dirichlet(5*np.ones(K))
+
+    y = np.zeros((N,D))
+
     for n in range(N):
-        if nodes.Bernoulli(pi).random():
-            y[n] = nodes.Gaussian(mu1, Lambda1).random()
-        else:
-            y[n] = nodes.Gaussian(mu2, Lambda2).random()
+        ind = nodes.Categorical(pi).random()
+        y[n] = nodes.Gaussian(mu[ind], Lambda[ind]).random()
+
+    np.savetxt('mog-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
 
     return y
 
 
-def run(K=10):
+def plot(seed=1, maxiter=None):
+    """
+    Show comparison plot
+    """
+
+    result_in = np.loadtxt('mog-results-%02d-infernet.csv' % seed,
+                           delimiter=',')
+
+    result_bp = np.loadtxt('mog-results-%02d-bayespy.csv' % seed,
+                           delimiter=',')
+
+    if maxiter is not None:
+        result_in = result_in[:maxiter,:]
+        result_bp = result_bp[:maxiter,:]
+
+    loglike_in = result_in[:,0]
+    loglike_bp = result_bp[:,0]
+    cputime_in = np.cumsum(result_in[:,1]) / 1000
+    cputime_bp = np.cumsum(result_bp[:,1])
+
+    # Show curves
+    plt.plot(cputime_in, loglike_in, 'k--')
+    plt.plot(cputime_bp, loglike_bp, 'r-')
+
+    # Show markers for every 10th iteration
+    plt.plot(cputime_in[9::10], loglike_in[9::10], '*', markeredgecolor='k', markerfacecolor='k')
+    plt.plot(cputime_bp[9::10], loglike_bp[9::10], '*', markeredgecolor='r', markerfacecolor='r')
+
+    plt.xlabel('CPU time (seconds)')
+    plt.ylabel('VB lower bound')
+
+    plt.legend(['Infer.NET', 'BayesPy'], loc='lower right')
+
+
+def run(N=2000, D=3, K=20, seed=1, maxiter=200):
 
     # Get data
-    #y = generate_data(N)
-    y = load_data_iris()
+    print("Generating data...")
+    y = generate_data(N, D, K, seed=seed)
 
     # Construct model
-    (N, D) = np.shape(y)
-    Q = mog_model(N,K,D)
+    Q = mog_model(N, 2*K, D)
 
     # Observe data
     Q['Y'].observe(y)
 
     # Run inference
-    Q.update(repeat=50)
+    print("Running inference...")
+    Q.update(repeat=maxiter, tol=0)
 
-    print(Q['alpha'].u[0])
+    Q['alpha'].show()
+
+    v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
+    np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")
+
+    # Run Infer.NET
+    os.system('make && mono mog_infernet.exe %d %d %d' % (2*K, seed, maxiter))
 
 
 if __name__ == '__main__':
-    run()
+    import sys, getopt, os
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],
+                                   "",
+                                   ["n=",
+                                    "d=",
+                                    "k=",
+                                    "maxiter=",
+                                    "seed="])
+    except getopt.GetoptError:
+        print('python demo_pca.py <options>')
+        print('--n=<INT>        Number of data vectors')
+        print('--d=<INT>        Dimensionality of the latent vectors in the model')
+        print('--k=<INT>        Dimensionality of the true latent vectors')
+        print('--maxiter=<INT>  Maximum number of VB iterations')
+        print('--seed=<INT>     Seed (integer) for the random number generator')
+        sys.exit(2)
+
+    kwargs = {}
+    for opt, arg in opts:
+        if opt == "--seed":
+            kwargs["seed"] = int(arg)
+        elif opt in ("--n",):
+            kwargs["N"] = int(arg)
+        elif opt in ("--d",):
+            kwargs["D"] = int(arg)
+        elif opt in ("--k",):
+            kwargs["K"] = int(arg)
+        elif opt in ("--maxiter",):
+            kwargs["maxiter"] = int(arg)
+
+    run(**kwargs)
+
 

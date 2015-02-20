@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 using MicrosoftResearch.Infer.Models;
@@ -54,8 +56,13 @@ namespace MicrosoftResearch.Infer.Tutorials
                 precs[k] = Variable.WishartFromShapeAndRate(d.SizeAsInt,
                                                             PositiveDefiniteMatrix.IdentityScaledBy(d.SizeAsInt,d.SizeAsInt)).ForEach(k);
 			
-                // Mixture weights 
-                weights = Variable.Dirichlet(k, new double[] { 1, 1 }).Named("weights");	
+                // Mixture weights
+                double[] a = new double[K];
+                for (int i = 0; i < K; i++)
+                {
+                    a[i] = 1;
+                }
+                weights = Variable.Dirichlet(k, a).Named("weights");	
 
                 // Create a variable array which will hold the data
                 data = Variable.Array<Vector>(n).Named("x");
@@ -81,52 +88,77 @@ namespace MicrosoftResearch.Infer.Tutorials
 
     public class MixtureOfGaussians
     {
-        static void Main()
+        static void Main(string[] args)
             {
                 Console.Write("Running mixture of Gaussians\n");
                 MixtureOfGaussians mog = new MixtureOfGaussians();
-                mog.Run();
+                mog.Run(int.Parse(args[0]), // clusters
+                        int.Parse(args[1]), // seed
+                        int.Parse(args[2])); // maxiter
                 return;
             }
 
-        public void Run()
+        public void Run(int K, int seed, int maxiter)
             {
-                // Start model
-                int K = 2;
-                int N = 300;
-                int D = 2;
+                Vector[] data = LoadData(string.Format("mog-data-{0:00}.csv", seed));
+                //data = GenerateData(300);
                 
+                // Restart the infer.NET random number generator
+                Rand.Restart(seed);
+          
+                // Model size
+                //int maxiter = 200;
+                //int K = 40;  // clusters
+                int N = data.Length; // samples
+                int D = data[0].Count; // dimensionality
+
                 MixtureOfGaussiansModel mog = new MixtureOfGaussiansModel(N, K, D);
 
                 // Attach some generated data
-                //mog.K.ObservedValue = 2;
-                //mog.N.ObservedValue = 300;
-                mog.data.ObservedValue = GenerateData(N);
-
+                mog.data.ObservedValue = data;
+                
                 // Initialise messages randomly so as to break symmetry
                 Discrete[] zinit = new Discrete[N];		
                 for (int i = 0; i < zinit.Length; i++) 
                     zinit[i] = Discrete.PointMass(Rand.Int(K), 
                                                   K);
-                mog.z.InitialiseTo(Distribution<int>.Array(zinit)); 
+                mog.z.InitialiseTo(Distribution<int>.Array(zinit));
 
                 // The inference
+                Process proc = Process.GetCurrentProcess();
                 double logEvidence = 0;
-                for (int j=0; j < 100; j++)
+                var loglike = new List<double>();
+                var cputime = new List<double>();
+                for (int j=0; j < maxiter; j++)
                 {
+                    // Measure CPU time
+                    double startUserProcessorTm = proc.UserProcessorTime.TotalMilliseconds;
+                    // Take one iteration more
                     mog.ie.NumberOfIterations = j+1;
                     // Infer the marginals
-                    mog.ie.Infer(mog.weights);
                     mog.ie.Infer(mog.means);
                     mog.ie.Infer(mog.precs);
-                    // Show lower bound
+                    mog.ie.Infer(mog.z);
+                    mog.ie.Infer(mog.weights);
+                    // Measure CPU time
+                    double endUserProcessorTm = proc.UserProcessorTime.TotalMilliseconds;
+                    cputime.Add(endUserProcessorTm - startUserProcessorTm);
+                    // Compute lower bound
                     logEvidence = mog.ie.Infer<Bernoulli>(mog.evidence).LogOdds;
-                    Console.WriteLine("The lower bound: {0}", logEvidence);
+                    loglike.Add(logEvidence);
+                    // Print progression
+                    Console.WriteLine("Iteration {0}: loglike={1} ({2} ms)",
+                                      j+1,
+                                      logEvidence,
+                                      endUserProcessorTm - startUserProcessorTm);
                 }
 
                 Console.WriteLine("Dist over pi=" + mog.ie.Infer(mog.weights));
-                Console.WriteLine("Dist over means=\n" + mog.ie.Infer(mog.means));
-                Console.WriteLine("Dist over precs=\n" + mog.ie.Infer(mog.precs));
+                //Console.WriteLine("Dist over means=\n" + mog.ie.Infer(mog.means));
+                //Console.WriteLine("Dist over precs=\n" + mog.ie.Infer(mog.precs));
+
+                SaveResults(string.Format("mog-results-{0:00}-infernet.csv", seed),
+                            loglike.ToArray(), cputime.ToArray());
 
             }
 
@@ -134,6 +166,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         /// <summary>
         /// Generates a data set from a particular true model.
         /// </summary>
+        /*
         public Vector[] GenerateData(int nData)
             {
                 Vector trueM1 = Vector.FromArray(2.0, 3.0);
@@ -147,13 +180,55 @@ namespace MicrosoftResearch.Infer.Tutorials
                 double truePi = 0.6;
                 Bernoulli trueB = new Bernoulli(truePi);
                 // Restart the infer.NET random number generator
-                Rand.Restart(12347);
+                Rand.Restart(42);
                 Vector[] data = new Vector[nData];
                 for (int j = 0; j < nData; j++) {
                     bool bSamp = trueB.Sample();
                     data[j] = bSamp ? trueVG1.Sample() : trueVG2.Sample();
                 }
                 return data;
+            }
+            //*/
+
+
+        public Vector[] LoadData(string filename)
+            {
+                StreamReader sr = new StreamReader(Path.GetFullPath(filename));
+                var lines = new List<double[]>();
+                int Row = 0;
+                while (!sr.EndOfStream)
+                {
+                    string[] Line = sr.ReadLine().Split(',');
+                    double[] Columns = new double[Line.Length];
+                    for (int i = 0; i < Line.Length; i++)
+                    {
+                        Columns[i] = double.Parse(Line[i]);
+                    }
+                    lines.Add(Columns);
+                    Row++;
+                    //Console.WriteLine(Row);
+                }
+
+                var array = lines.ToArray();
+                
+                Vector[] data = new Vector[array.Length];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    data[i] = Vector.FromArray(array[i]);
+                }
+                return data;
+            }
+
+        public void SaveResults(string filename, double[] loglike, double[] cputime)
+            {
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(Path.GetFullPath(filename)))
+                {
+                    for (int i = 0; i < loglike.Length; i++)
+                    {
+                        file.WriteLine(loglike[i] + "," + cputime[i]);
+                    }
+                }
+
             }
     }
 }
