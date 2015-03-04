@@ -51,7 +51,7 @@ def model(M, N, D):
                               shape=(D,),
                               plates=(M,1),
                               name='W')
-    elif False:
+    elif True:
 
         # Full covariance
         alpha = nodes.Wishart(D,
@@ -106,22 +106,26 @@ def generate_data(M, N, D, seed=1):
     np.random.seed(seed)
     W = np.random.randn(M, D)
     X = np.random.randn(D, N)
-    y = np.dot(W, X) + 0.1*np.random.randn(M, N)
+    y = np.dot(W, X) + 0.5*np.random.randn(M, N)
     np.savetxt('pca-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
     return y
 
 
+def plot(seed=1, maxiter=None):
+    """
+    Show comparison plot
+    """
+    utils.plot('pca', seed, maxiter=maxiter)
 
 
-@bpplt.interactive
 def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
 
     # Generate data
     print("Generating data...")
-    y = generate_data(M, N, D, seed=seed)
+    y = generate_data(M, N, np.ceil(D/2), seed=seed)
 
     # Construct model
-    Q = model(M, N, 2*D)
+    Q = model(M, N, D)
 
     # Observe data
     Q['Y'].observe(y)
@@ -138,9 +142,10 @@ def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
     print("Running inference...")
     Q.update(repeat=maxiter, tol=0)
 
-    Q['W'].show()
-    Q['X'].show()
-    Q['tau'].show()
+    v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
+    np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")
+
+    print(Q['tau'])
 
 
 if __name__ == '__main__':

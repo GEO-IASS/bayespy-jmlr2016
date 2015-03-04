@@ -96,44 +96,17 @@ def plot(seed=1, maxiter=None):
     """
     Show comparison plot
     """
-
-    result_in = np.loadtxt('mog-results-%02d-infernet.csv' % seed,
-                           delimiter=',')
-
-    result_bp = np.loadtxt('mog-results-%02d-bayespy.csv' % seed,
-                           delimiter=',')
-
-    if maxiter is not None:
-        result_in = result_in[:maxiter,:]
-        result_bp = result_bp[:maxiter,:]
-
-    loglike_in = result_in[:,0]
-    loglike_bp = result_bp[:,0]
-    cputime_in = np.cumsum(result_in[:,1])
-    cputime_bp = np.cumsum(result_bp[:,1])
-
-    # Show curves
-    plt.plot(cputime_in, loglike_in, 'k--')
-    plt.plot(cputime_bp, loglike_bp, 'r-')
-
-    # Show markers for every 10th iteration
-    plt.plot(cputime_in[9::10], loglike_in[9::10], '*', markeredgecolor='k', markerfacecolor='k')
-    plt.plot(cputime_bp[9::10], loglike_bp[9::10], '*', markeredgecolor='r', markerfacecolor='r')
-
-    plt.xlabel('CPU time (seconds)')
-    plt.ylabel('VB lower bound')
-
-    plt.legend(['Infer.NET', 'BayesPy'], loc='lower right')
+    utils.plot('mog', seed, maxiter=maxiter)
 
 
 def run(N=2000, D=3, K=20, seed=1, maxiter=200):
 
     # Get data
     print("Generating data...")
-    y = generate_data(N, D, K, seed=seed)
+    y = generate_data(N, D, np.ceil(K/2), seed=seed)
 
     # Construct model
-    Q = mog_model(N, 2*K, D)
+    Q = mog_model(N, K, D)
 
     # Observe data
     Q['Y'].observe(y)
