@@ -161,8 +161,8 @@ namespace MicrosoftResearch.Infer.Tutorials
                 }
 
                 Console.WriteLine("Dist over pi=" + mog.engine.Infer(mog.weights));
-                //Console.WriteLine("Dist over means=\n" + mog.engine.Infer(mog.means));
-                //Console.WriteLine("Dist over precs=\n" + mog.engine.Infer(mog.precs));
+                //Console.WriteLine("Dist over means=\n" + mog.ie.Infer(mog.means));
+                //Console.WriteLine("Dist over precs=\n" + mog.ie.Infer(mog.precs));
 
                 SaveResults(string.Format("mog-results-{0:00}-infernet.csv", seed),
                             loglike.ToArray(), cputime.ToArray());

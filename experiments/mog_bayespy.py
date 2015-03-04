@@ -25,10 +25,7 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
-#import time
 
-#from bayespy.utils import misc
-#import bayespy.plot as myplt
 from bayespy import nodes
 from bayespy.inference import VB
 from bayespy.utils import random
@@ -68,12 +65,6 @@ def mog_model(N, K, D):
     return VB(Y, mu, Lambda, z, alpha)
 
 
-## def load_data_iris():
-##     return np.genfromtxt('mog_data/bezdekIris.data',
-##                          usecols=tuple(range(0,4)),
-##                          delimiter=',')
-
-
 def generate_data(N, D, K, seed=1):
     """
     Generate data from a mixture of Gaussians model
@@ -81,7 +72,7 @@ def generate_data(N, D, K, seed=1):
 
     np.random.seed(seed)
 
-    mu = np.random.randn(K, D)
+    mu = 3*np.random.randn(K, D)
     # Lambda is actually precision matrix (inverse covariance)
     Lambda = random.covariance(D, size=K)
     pi = random.dirichlet(5*np.ones(K))
@@ -93,6 +84,10 @@ def generate_data(N, D, K, seed=1):
         y[n] = nodes.Gaussian(mu[ind], Lambda[ind]).random()
 
     np.savetxt('mog-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
+
+    print(mu)
+    plt.plot(y[:,0], y[:,1], 'rx')
+    plt.show()
 
     return y
 
@@ -147,7 +142,8 @@ def run(N=2000, D=3, K=20, seed=1, maxiter=200):
     print("Running inference...")
     Q.update(repeat=maxiter, tol=0)
 
-    Q['alpha'].show()
+    print(Q['alpha'])
+    print(Q['mu'])
 
     v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
     np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")
