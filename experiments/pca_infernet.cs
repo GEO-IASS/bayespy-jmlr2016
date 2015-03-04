@@ -1,10 +1,12 @@
 ﻿using System;
+using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
 using System.Text;
 using MicrosoftResearch.Infer;
 using MicrosoftResearch.Infer.Distributions;
 using MicrosoftResearch.Infer.Maths;
 using MicrosoftResearch.Infer.Models;
-using System.Diagnostics;
 
 namespace MicrosoftResearch.Infer.Tutorials
 {
@@ -140,11 +142,12 @@ namespace MicrosoftResearch.Infer.Tutorials
         // Inference engine
         public InferenceEngine engine = null;
         // Model variables
+        public Variable<PositiveDefiniteMatrix> Alpha = null;
         public VariableArray<Vector> W = null;
         public VariableArray<Vector> Z = null;
         public VariableArray<double> mu = null;
         public VariableArray2D<double> data = null;
-        public VariableArray<double> pi = null;
+        public Variable<double> pi = null;
         //*/
         //public VariableArray2D<double> vT = null;
         //public VariableArray2D<double> vU = null;
@@ -157,7 +160,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         // a distribution as an argument.
         //public Variable<Gamma> priorAlpha = null;
         //public Variable<Gaussian> priorMu = null;
-        public Variable<Gamma> priorPi = null;
+        //public Variable<Gamma> priorPi = null;
         // Model ranges
         //public Variable<int> N = null;
         //public Variable<int> D = null;
@@ -169,42 +172,32 @@ namespace MicrosoftResearch.Infer.Tutorials
         // Variable for computing the lower bound
         public Variable<bool> evidence = Variable.Bernoulli(0.5).Named("evidence");
 
-        /// <summary>
-        /// Model constructor
-        /// </summary>
         public BayesianPCAModel(int M, int N, int D)
             {
 
                 // Stuff for the lower bound / evidence
                 IfBlock block = Variable.If(evidence);
 
-                // Start model
-                    
                 // The various dimensions will be set externally...
                 rN = new Range(N).Named("N");
                 rD = new Range(D).Named("D");
                 rM = new Range(M).Named("M");
                 
-                // ... as will the data
-                //vData = Variable.Array<double>(rN, rD).Named("data");
-                // ... and the priors
                 //priorAlpha = Variable.New<Gamma>().Named("PriorAlpha");
-                //priorMu = Variable.New<Gaussian>().Named("PriorMu");
-                priorPi = Variable.New<Gamma>().Named("PriorPi");
-                //priorPi.ObservedValue = Gamma.FromShapeAndRate(2.0, 2.0);
-                
+                Alpha = Variable.WishartFromShapeAndRate(rD.SizeAsInt,
+                                                         PositiveDefiniteMatrix.IdentityScaledBy(rD.SizeAsInt,
+                                                                                                     rD.SizeAsInt));
                 // Mixing matrix
                 W = Variable.Array<Vector>(rM).Named("W");
-                var Alpha = Variable.WishartFromShapeAndRate(rD.SizeAsInt,
-                                                             PositiveDefiniteMatrix.IdentityScaledBy(rD.SizeAsInt,
-                                                                                                     rD.SizeAsInt));
                 W[rM] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(rD.SizeAsInt),
-                                                                   Alpha).ForEach(rM);
+                                                                    PositiveDefiniteMatrix.Identity(rD.SizeAsInt)).ForEach(rM);
+                //W[rM] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(rD.SizeAsInt),
+                //                                                   Alpha).ForEach(rM);
 
                 // Latent variables
                 Z = Variable.Array<Vector>(rN).Named("Z");
                 Z[rN] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(rD.SizeAsInt),
-                                                                   PositiveDefiniteMatrix.Identity(rD.SizeAsInt)).ForEach(rN);
+                                                                    PositiveDefiniteMatrix.Identity(rD.SizeAsInt)).ForEach(rN);
 
                 // Multiply
                 var ZtimesW = Variable.Array<double>(rM, rN).Named("ZtimesW");
@@ -219,13 +212,17 @@ namespace MicrosoftResearch.Infer.Tutorials
                 //*/
 
                 // Observation noise
-                pi = Variable.Array<double>(rM).Named("pi");
-                pi[rM] = Variable.Random<double, Gamma>(priorPi).ForEach(rM);
+                // Set the priors
+                //bpca.priorPi.ObservedValue = Gamma.FromShapeAndRate(0.01, 0.01);
+                //bpca.priorAlpha.ObservedValue = Gamma.FromShapeAndRate(2.0, 2.0);
+                //priorPi = Variable.New<Gamma>().Named("PriorPi");
+                //pi = Variable.Array<double>(rM).Named("pi");
+                pi = Variable.GammaFromShapeAndRate(0.01, 0.01);
+                //pi[rM] = Variable.Random<double, Gamma>(priorPi).ForEach(rM);
 
                 // Observations
                 data = Variable.Array<double>(rM, rN).Named("Y");
-                data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZtimesW[rM,rN], pi[rM]);
-                //data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZWplusMu[rM,rN], pi[rM]);
+                data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZtimesW[rM,rN], pi);
 
                 // End evidence/lowerbound block
                 block.CloseBlock();
@@ -238,42 +235,39 @@ namespace MicrosoftResearch.Infer.Tutorials
 
     }
 
-    /// <summary>
-    /// Run a Bayesian PCA example
-    /// </summary>
-    [Example("Applications", "A Bayesian Principal Components Analysis example")]
     public class BayesianPCA
     {
-        static int numComp = 10;
-        static int numFeat = 100;
-        static int numObs = 1000;
 
-        static void Main()
+        static void Main(string[] args)
             {
                     
                 Console.Write("Running PCA.\n");
                 BayesianPCA bpca = new BayesianPCA();
-                bpca.Run();
+                bpca.Run(int.Parse(args[0]),  // components
+                         int.Parse(args[1]),  // seed
+                         int.Parse(args[2])); // maxiter
                 return;
             }
 
-        public double cputime()
+        public double get_cputime()
             {
                 Process process = Process.GetCurrentProcess();
-                //System.TimeSpan lifeInterval = (DateTime.Now - process.StartTime);
                 return process.TotalProcessorTime.TotalMilliseconds;
-                //FILETIME ftSysIdle, ftSysKernel, ftSysUser;
-                //FILETIME ftProcCreation, ftProcExit, ftProcKernel, ftProcUser;
-                //GetProcessTimes(GetCurrentProcess(), &ftProcCreation, &ftProcExit, &ftProcKernel, &ftProcUser);
-                
             }
             
-        public void Run()
+        public void Run(int D, int seed, int maxiter)
             {
-                int M = numFeat;
-                int N = numObs;
-                int D = numComp;
                 
+                // Restart the infer.NET random number generator
+                Rand.Restart(seed);
+
+                // Load data
+                double[,] data = LoadData(string.Format("pca-data-{0:00}.csv", seed));
+
+                // Construct model
+                int M = data.GetLength(0);
+                int N = data.GetLength(1);
+                Console.WriteLine("M={0} and N={1}\n", M, N);
                 BayesianPCAModel bpca = new BayesianPCAModel(M, N, D);
                 if (!(bpca.engine.Algorithm is VariationalMessagePassing))
                 {
@@ -281,68 +275,68 @@ namespace MicrosoftResearch.Infer.Tutorials
                     return;
                 }
 	
-                // Set a stable random number seed for repeatbale runs
-                //Rand.Restart(12347);
-                double[,] data = generateData();
                 // Set the data
                 bpca.data.ObservedValue = data;
-                // Set the dimensions
-                //bpca.N.ObservedValue = numObs;
-                //bpca.M.ObservedValue = numFeat;
-                //bpca.D.ObservedValue = numComp;
-                // Set the priors
-                //bpca.priorMu.ObservedValue = Gaussian.FromMeanAndPrecision(0.0, 0.01);
-                bpca.priorPi.ObservedValue = Gamma.FromShapeAndRate(0.01, 0.01);
-                //bpca.priorAlpha.ObservedValue = Gamma.FromShapeAndRate(2.0, 2.0);
                 // Initialize the W marginal to break symmetry
                 bpca.W.InitialiseTo(RandomGaussianVectorArray(M, D));
+
+                //IDistribution<Vector> wMarginal = null; //bpca.engine.Infer(bpca.W);
+
                 double logEvidence = 0;
-
-                double t0, t1;
-                t0 = cputime();
-
-                for (int j=0; j < 100; j++)
+                var loglike = new List<double>();
+                var cputime = new List<double>();
+                double starttime, endtime;
+                for (int j=0; j < maxiter; j++)
                 {
+                    starttime = get_cputime();
                     bpca.engine.NumberOfIterations = j+1;
                     // Infer the marginals
-                    //bpca.engine.Infer<IDistribution<double[,]>>(bpca.W);
-                    //bpca.engine.Infer<IDistribution<double[,]>>(bpca.Z);
-                    //bpca.engine.Infer<IDistribution<double[]>>(bpca.mu);
-                    //bpca.engine.Infer<IDistribution<double[]>>(bpca.pi);
-                    // Show lower bound
+                    //bpca.engine.Infer(bpca.Alpha);
+                    bpca.engine.Infer(bpca.W);
+                    bpca.engine.Infer(bpca.Z);
+                    bpca.engine.Infer(bpca.pi);
+                    // Measure CPU time
+                    endtime = get_cputime();
+                    cputime.Add((endtime - starttime) / 1000.0);
+                    // Compute lower bound
                     logEvidence = bpca.engine.Infer<Bernoulli>(bpca.evidence).LogOdds;
-                    Console.WriteLine("The lower bound: {0}", logEvidence);
-                    t1 = cputime();
-                    Console.WriteLine("Time {0}\n", t1-t0);
-                    t0 = t1;
+                    // Print progress
+                    Console.WriteLine("Iteration {0}: loglike={1} ({2} ms)",
+                                      j+1,
+                                      logEvidence,
+                                      endtime - starttime);
                 }
-                /*
-                IDistribution<double[,]> wMarginal = bpca.engine.Infer<IDistribution<double[,]>>(bpca.W);
-                //IDistribution<double[]> muMarginal = bpca.engine.Infer<IDistribution<double[]>>(bpca.mu);
-                IDistribution<double[]> piMarginal = bpca.engine.Infer<IDistribution<double[]>>(bpca.pi);
+                SaveResults(string.Format("pca-results-{0:00}-infernet.csv", seed),
+                            loglike.ToArray(), cputime.ToArray());
+                //*
+                //IDistribution<double[,]> wMarginal = bpca.engine.Infer(bpca.W);
+                //IDistribution<double[]> piMarginal = bpca.engine.Infer(bpca.pi);
                 // Convert distributions over arrays of doubles to arrays of distributions
                 //Gaussian[,] inferredW = Distribution.ToArray<Gaussian[,]>(wMarginal);
-                //Gaussian[] inferredMu = Distribution.ToArray<Gaussian[]>(muMarginal);
-                Gamma[] inferredPi = Distribution.ToArray<Gamma[]>(piMarginal);
+                //Gamma[] inferredPi = Distribution.ToArray<Gamma[]>(piMarginal);
                 // Print out the results
-                Console.WriteLine("Inferred W:");
-                printMatrixToConsole(inferredW);
-                Console.Write("Mean absolute means of rows in W: ");
-                printVectorToConsole(meanAbsoluteRowMeans(inferredW));
-                Console.Write("    True bias: ");
-                printVectorToConsole(trueMu);
-                Console.Write("Inferred bias: ");
-                printVectorToConsole(inferredMu);
-                Console.Write("    True noise:");
-                printVectorToConsole(truePi);
-                Console.Write("Inferred noise:");
-                printVectorToConsole(inferredPi);
-                Console.Write("Distribution of W\n" + bpca.engine.Infer(bpca.W));
-                Console.WriteLine();
+                //bpca.engine.NumberOfIterations++; // = j+1;
+                Console.WriteLine("q(W) =\n" + bpca.engine.Infer(bpca.W));
+                Console.WriteLine("q(X) =\n" + bpca.engine.Infer(bpca.Z));
+                Console.WriteLine("q(tau) =\n" + bpca.engine.Infer(bpca.pi));
+                //printMatrixToConsole(inferredW);
+                //Console.Write("Mean absolute means of rows in W: ");
+                //printVectorToConsole(meanAbsoluteRowMeans(inferredW));
+                //Console.Write("    True bias: ");
+                //printVectorToConsole(trueMu);
+                //Console.Write("Inferred bias: ");
+                //printVectorToConsole(inferredMu);
+                //Console.Write("    True noise:");
+                //printVectorToConsole(truePi);
+                //Console.Write("Inferred noise:");
+                //printVectorToConsole(inferredPi);
+                //Console.Write("Distribution of W\n" + bpca.engine.Infer(bpca.W));
+                //Console.WriteLine();
                 //*/
 
             }
 
+        /*
         /// <summary>
         /// True W. Inference will find a different basis
         /// </summary>
@@ -369,6 +363,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         static double[] truePi = new double[numFeat];
         //static double[] truePi = {  8.0, 9.0, 10.0, 11.0, 10.0, 9.0, 8.0, 9.0, 10.0, 11.0 };
 
+        //*/
         public static IDistribution<Vector[]> RandomGaussianVectorArray(int N, int C)
             {
                 VectorGaussian[] array = new VectorGaussian[N];
@@ -380,6 +375,9 @@ namespace MicrosoftResearch.Infer.Tutorials
                 }
                 return Distribution<Vector>.Array(array);
             }
+        //*/
+
+        /*
         
         /// <summary>
         /// Generate data from the true model
@@ -466,6 +464,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         /// Print the means of a 2-D array of Gaussians to the console
         /// </summary>
         /// <param name="matrix"></param>
+        //*/
         private static void printMatrixToConsole(Gaussian[,] matrix)
             {
                 for (int i = 0; i < matrix.GetLength(0); i++)
@@ -475,6 +474,7 @@ namespace MicrosoftResearch.Infer.Tutorials
                     Console.WriteLine("");
                 }
             }
+        /*
 
         /// <summary>
         /// Print a 2-D double array to the console
@@ -521,6 +521,63 @@ namespace MicrosoftResearch.Infer.Tutorials
                 for (int i = 0; i < vector.GetLength(0); i++)
                     Console.Write("{0,5:0.00}\t", vector[i]);
                 Console.WriteLine("");
+            }
+
+            //*/
+        public double[,] LoadData(string filename)
+            {
+                StreamReader sr = new StreamReader(Path.GetFullPath(filename));
+                var lines = new List<double[]>();
+                int Row = 0;
+                while (!sr.EndOfStream)
+                {
+                    string[] Line = sr.ReadLine().Split(',');
+                    double[] Columns = new double[Line.Length];
+                    for (int i = 0; i < Line.Length; i++)
+                    {
+                        Columns[i] = double.Parse(Line[i]);
+                    }
+                    lines.Add(Columns);
+                    Row++;
+                    //Console.WriteLine(Row);
+                }
+
+                double[][] array = lines.ToArray();
+
+                int M = array.Length;
+                int N = array[0].Length;
+                double[,] data = new double[M,N];
+
+                for (int i = 0; i < M; i++)
+                {
+                    for (int j = 0; j < N; j++)
+                    {
+                        data[i,j] = array[i][j];
+                    }
+                }
+
+                return data;
+                    /*
+                double[,] data = new doubleVector[array.Length];
+                for (int i = 0; i < array.Length; i++)
+                {
+                    data[i] = Vector.FromArray(array[i]);
+                }
+                return data;
+                //*/
+            }
+
+
+        public void SaveResults(string filename, double[] loglike, double[] cputime)
+            {
+                using (System.IO.StreamWriter file = new System.IO.StreamWriter(Path.GetFullPath(filename)))
+                {
+                    for (int i = 0; i < loglike.Length; i++)
+                    {
+                        file.WriteLine(loglike[i] + "," + cputime[i]);
+                    }
+                }
+
             }
     }
 }

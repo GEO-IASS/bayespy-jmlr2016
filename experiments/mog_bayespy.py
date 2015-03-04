@@ -114,7 +114,7 @@ def plot(seed=1, maxiter=None):
 
     loglike_in = result_in[:,0]
     loglike_bp = result_bp[:,0]
-    cputime_in = np.cumsum(result_in[:,1]) / 1000
+    cputime_in = np.cumsum(result_in[:,1])
     cputime_bp = np.cumsum(result_bp[:,1])
 
     # Show curves
@@ -152,9 +152,6 @@ def run(N=2000, D=3, K=20, seed=1, maxiter=200):
     v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
     np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")
 
-    # Run Infer.NET
-    os.system('make && mono mog_infernet.exe %d %d %d' % (2*K, seed, maxiter))
-
 
 if __name__ == '__main__':
     import sys, getopt, os
@@ -167,7 +164,7 @@ if __name__ == '__main__':
                                     "maxiter=",
                                     "seed="])
     except getopt.GetoptError:
-        print('python demo_pca.py <options>')
+        print('python mog_bayespy.py <options>')
         print('--n=<INT>        Number of data vectors')
         print('--d=<INT>        Dimensionality of the latent vectors in the model')
         print('--k=<INT>        Dimensionality of the true latent vectors')

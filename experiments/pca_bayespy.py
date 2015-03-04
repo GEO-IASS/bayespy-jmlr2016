@@ -40,7 +40,7 @@ def model(M, N, D):
     # Construct the PCA model with ARD
 
     if False:
-        # ARD
+        # ARD covariance
         alpha = nodes.Gamma(1e-2,
                             1e-2,
                             plates=(D,),
@@ -51,9 +51,9 @@ def model(M, N, D):
                               shape=(D,),
                               plates=(M,1),
                               name='W')
-    else:
+    elif False:
 
-        # ARD
+        # Full covariance
         alpha = nodes.Wishart(D,
                               D*np.identity(D),
                               name='alpha')
@@ -63,6 +63,18 @@ def model(M, N, D):
                            alpha,
                            plates=(M,1),
                            name='W')
+    else:
+        # Constant covariance
+
+        # Dummy node
+        alpha = nodes.Bernoulli(0.5, name='alpha')
+
+        # Loadings
+        W = nodes.GaussianARD(0,
+                              1,
+                              shape=(D,),
+                              plates=(M,1),
+                              name='W')
 
     # States
     X = nodes.GaussianARD(0,
@@ -77,49 +89,42 @@ def model(M, N, D):
 
     # Noise
     tau = nodes.Gamma(1e-2, 1e-2,
-                      plates=(M,1),
                       name='tau')
 
     # Noisy observations
     Y = nodes.GaussianARD(F, tau,
                           name='Y')
 
-    return (Y, F, W, X, tau, alpha)
-
-
-def generate_data(M, N, D):
-    W = np.random.randn(M, D)
-    return np.dot(W, np.random.randn(D, N)) + 1.0*np.random.randn(M, N)
-
-
-@bpplt.interactive
-def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=100, debug=False, plot=True):
-
-    if seed is not None:
-        np.random.seed(seed)
-    
-    # Generate data
-    #w = np.random.normal(0, 1, size=(M,1,D_y))
-    #x = np.random.normal(0, 1, size=(1,N,D_y))
-    #f = misc.sum_product(w, x, axes_to_sum=[-1])
-    #y = f + np.random.normal(0, 0.2, size=(M,N))
-    y = generate_data(M, N, D)
-
-    # Construct model
-    (Y, F, W, X, tau, alpha) = model(M, N, D)
-
-    ## # Data with missing values
-    ## mask = random.mask(M, N, p=0.5) # randomly missing
-    ## y[~mask] = np.nan
-    ## Y.observe(y, mask=mask)
-    Y.observe(y)
-
-    # Construct inference machine
-    Q = VB(Y, W, X, tau, alpha)
-
     # Initialize some nodes randomly
     X.initialize_from_random()
     W.initialize_from_random()
+
+    return VB(Y, F, W, X, tau, alpha)
+
+
+def generate_data(M, N, D, seed=1):
+    np.random.seed(seed)
+    W = np.random.randn(M, D)
+    X = np.random.randn(D, N)
+    y = np.dot(W, X) + 0.1*np.random.randn(M, N)
+    np.savetxt('pca-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
+    return y
+
+
+
+
+@bpplt.interactive
+def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
+
+    # Generate data
+    print("Generating data...")
+    y = generate_data(M, N, D, seed=seed)
+
+    # Construct model
+    Q = model(M, N, 2*D)
+
+    # Observe data
+    Q['Y'].observe(y)
 
     # Run inference algorithm
     if rotate:
@@ -127,24 +132,15 @@ def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=100, debug=False, pl
         rotW = transformations.RotateGaussianARD(W, alpha)
         rotX = transformations.RotateGaussianARD(X)
         R = transformations.RotationOptimizer(rotW, rotX, D)
-        for ind in range(maxiter):
-            Q.update()
-            if debug:
-                R.rotate(check_bound=True,
-                         check_gradient=True)
-            else:
-                R.rotate()
+        Q.set_callback(R.rotate)
             
-    else:
-        # Use standard VB-EM alone
-        Q.update(repeat=maxiter)
+    # Use standard VB-EM alone
+    print("Running inference...")
+    Q.update(repeat=maxiter, tol=0)
 
-    ## # Plot results
-    ## if plot:
-    ##     plt.figure()
-    ##     bpplt.timeseries_normal(F, scale=2)
-    ##     bpplt.timeseries(f, color='g', linestyle='-')
-    ##     bpplt.timeseries(y, color='r', linestyle='None', marker='+')
+    Q['W'].show()
+    Q['X'].show()
+    Q['tau'].show()
 
 
 if __name__ == '__main__':
@@ -155,17 +151,15 @@ if __name__ == '__main__':
                                    ["m=",
                                     "n=",
                                     "d=",
-                                    "k=",
                                     "seed=",
                                     "maxiter=",
                                     "debug",
                                     "rotate"])
     except getopt.GetoptError:
-        print('python demo_pca.py <options>')
+        print('python pca_bayespy.py <options>')
         print('--m=<INT>        Dimensionality of data vectors')
         print('--n=<INT>        Number of data vectors')
         print('--d=<INT>        Dimensionality of the latent vectors in the model')
-        print('--k=<INT>        Dimensionality of the true latent vectors')
         print('--rotate         Apply speed-up rotations')
         print('--maxiter=<INT>  Maximum number of VB iterations')
         print('--seed=<INT>     Seed (integer) for the random number generator')
@@ -188,8 +182,6 @@ if __name__ == '__main__':
             kwargs["N"] = int(arg)
         elif opt in ("--d",):
             kwargs["D"] = int(arg)
-        elif opt in ("--k",):
-            kwargs["D_y"] = int(arg)
 
     run(**kwargs)
     plt.show()

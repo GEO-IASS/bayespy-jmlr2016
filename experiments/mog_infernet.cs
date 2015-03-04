@@ -26,7 +26,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         public Range n = null;
         public Range d = null;
 
-        public InferenceEngine ie = null;
+        public InferenceEngine engine = null;
 
         // Variable for computing the lower bound
         public Variable<bool> evidence = null;
@@ -80,7 +80,7 @@ namespace MicrosoftResearch.Infer.Tutorials
                 // End evidence/lowerbound block
                 block.CloseBlock();
                     
-                ie = new InferenceEngine(new VariationalMessagePassing());
+                engine = new InferenceEngine(new VariationalMessagePassing());
             }
             
         
@@ -98,6 +98,12 @@ namespace MicrosoftResearch.Infer.Tutorials
                 return;
             }
 
+        public double get_cputime()
+            {
+                Process process = Process.GetCurrentProcess();
+                return process.TotalProcessorTime.TotalMilliseconds;
+            }
+            
         public void Run(int K, int seed, int maxiter)
             {
                 Vector[] data = LoadData(string.Format("mog-data-{0:00}.csv", seed));
@@ -125,70 +131,43 @@ namespace MicrosoftResearch.Infer.Tutorials
                 mog.z.InitialiseTo(Distribution<int>.Array(zinit));
 
                 // The inference
-                Process proc = Process.GetCurrentProcess();
+                //Process proc = Process.GetCurrentProcess();
                 double logEvidence = 0;
                 var loglike = new List<double>();
                 var cputime = new List<double>();
+                double starttime, endtime;
                 for (int j=0; j < maxiter; j++)
                 {
                     // Measure CPU time
-                    double startUserProcessorTm = proc.UserProcessorTime.TotalMilliseconds;
+                    starttime = get_cputime();
                     // Take one iteration more
-                    mog.ie.NumberOfIterations = j+1;
+                    mog.engine.NumberOfIterations = j+1;
                     // Infer the marginals
-                    mog.ie.Infer(mog.means);
-                    mog.ie.Infer(mog.precs);
-                    mog.ie.Infer(mog.z);
-                    mog.ie.Infer(mog.weights);
+                    mog.engine.Infer(mog.means);
+                    mog.engine.Infer(mog.precs);
+                    mog.engine.Infer(mog.z);
+                    mog.engine.Infer(mog.weights);
                     // Measure CPU time
-                    double endUserProcessorTm = proc.UserProcessorTime.TotalMilliseconds;
-                    cputime.Add(endUserProcessorTm - startUserProcessorTm);
+                    endtime = get_cputime();
+                    cputime.Add((endtime - starttime)/1000.0);
                     // Compute lower bound
-                    logEvidence = mog.ie.Infer<Bernoulli>(mog.evidence).LogOdds;
+                    logEvidence = mog.engine.Infer<Bernoulli>(mog.evidence).LogOdds;
                     loglike.Add(logEvidence);
                     // Print progression
                     Console.WriteLine("Iteration {0}: loglike={1} ({2} ms)",
                                       j+1,
                                       logEvidence,
-                                      endUserProcessorTm - startUserProcessorTm);
+                                      endtime - starttime);
                 }
 
-                Console.WriteLine("Dist over pi=" + mog.ie.Infer(mog.weights));
-                //Console.WriteLine("Dist over means=\n" + mog.ie.Infer(mog.means));
-                //Console.WriteLine("Dist over precs=\n" + mog.ie.Infer(mog.precs));
+                Console.WriteLine("Dist over pi=" + mog.engine.Infer(mog.weights));
+                //Console.WriteLine("Dist over means=\n" + mog.engine.Infer(mog.means));
+                //Console.WriteLine("Dist over precs=\n" + mog.engine.Infer(mog.precs));
 
                 SaveResults(string.Format("mog-results-{0:00}-infernet.csv", seed),
                             loglike.ToArray(), cputime.ToArray());
 
             }
-
-
-        /// <summary>
-        /// Generates a data set from a particular true model.
-        /// </summary>
-        /*
-        public Vector[] GenerateData(int nData)
-            {
-                Vector trueM1 = Vector.FromArray(2.0, 3.0);
-                Vector trueM2 = Vector.FromArray(7.0, 5.0);
-                PositiveDefiniteMatrix trueP1 = new PositiveDefiniteMatrix(
-                    new double[,] { { 3.0, 0.2 }, { 0.2, 2.0 } });
-                PositiveDefiniteMatrix trueP2 = new PositiveDefiniteMatrix(
-                    new double[,] { { 2.0, 0.4 }, { 0.4, 4.0 } });
-                VectorGaussian trueVG1 = VectorGaussian.FromMeanAndPrecision(trueM1, trueP1);
-                VectorGaussian trueVG2 = VectorGaussian.FromMeanAndPrecision(trueM2, trueP2);
-                double truePi = 0.6;
-                Bernoulli trueB = new Bernoulli(truePi);
-                // Restart the infer.NET random number generator
-                Rand.Restart(42);
-                Vector[] data = new Vector[nData];
-                for (int j = 0; j < nData; j++) {
-                    bool bSamp = trueB.Sample();
-                    data[j] = bSamp ? trueVG1.Sample() : trueVG2.Sample();
-                }
-                return data;
-            }
-            //*/
 
 
         public Vector[] LoadData(string filename)
@@ -218,6 +197,7 @@ namespace MicrosoftResearch.Infer.Tutorials
                 }
                 return data;
             }
+
 
         public void SaveResults(string filename, double[] loglike, double[] cputime)
             {
