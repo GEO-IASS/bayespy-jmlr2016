@@ -11,32 +11,31 @@ using MicrosoftResearch.Infer.Models;
 namespace MicrosoftResearch.Infer.Tutorials
 {
 
-/*
-    public class BayesianPCAFullyFactorizedModel
+    public interface BayesianPCAModel
+    {
+        void create(int M, int N, int D);
+
+        void observe(double[,] obs);
+
+        void update();
+
+        double bound();
+
+        void print();
+        
+    }
+
+
+    public class BayesianPCAModel_Factorized : BayesianPCAModel
     {
         // Inference engine
         public InferenceEngine engine = null;
         // Model variables
-        public Variable<int> vN = null;
-        public Variable<int> vD = null;
-        public Variable<int> vM = null;
-        public VariableArray2D<double> vData = null;
-        //* DEFAULT SCALAR VERSION
-        public VariableArray2D<double> vW = null;
-        public VariableArray2D<double> vZ = null;
-        public VariableArray2D<double> vT = null;
-        public VariableArray2D<double> vU = null;
-        public VariableArray<double> vMu = null;
-        public VariableArray<double> vPi = null;
-        public VariableArray<double> vAlpha = null;
-        // Priors - these are declared as distribution variables
-        // so that we can set them at run-time. They are variables
-        // from the perspective of the 'Random' factor which takes
-        // a distribution as an argument.
-        public Variable<Gamma> priorAlpha = null;
-        public Variable<Gaussian> priorMu = null;
-        public Variable<Gamma> priorPi = null;
-        // Model ranges
+        public VariableArray2D<double> data = null;
+        public VariableArray2D<double> W = null;
+        public VariableArray2D<double> Z = null;
+        public Variable<double> tau = null;
+        public VariableArray<double> Alpha = null;
         public Range rN = null;
         public Range rD = null;
         public Range rM = null;
@@ -44,86 +43,60 @@ namespace MicrosoftResearch.Infer.Tutorials
         // Variable for computing the lower bound
         public Variable<bool> evidence = Variable.Bernoulli(0.5).Named("evidence");
 
-        /// <summary>
-        /// Model constructor
-        /// </summary>
-        public BayesianPCAFullyFactorizedModel()
+        public void observe(double[,] obs)
+            {
+                data.ObservedValue = obs;
+            }
+
+        public void update()
+            {
+                engine.NumberOfIterations++;
+                engine.Infer(Alpha);
+                engine.Infer(W);
+                engine.Infer(Z);
+                engine.Infer(tau);
+            }
+
+        public double bound()
+            {
+                return engine.Infer<Bernoulli>(evidence).LogOdds;                
+            }
+
+        public void print()
+            {
+                Console.WriteLine("q(tau) =\n" + engine.Infer(tau));
+            }
+        
+        public void create(int M, int N, int D)
             {
 
                 // Stuff for the lower bound / evidence
                 IfBlock block = Variable.If(evidence);
 
-                // Start model
-                    
-                // The various dimensions will be set externally...
-                N = Variable.New<int>().Named("NumSamples");
-                M = Variable.New<int>().Named("NumDimensions");
-                D = Variable.New<int>().Named("NumComponents");
-                rN = new Range(vN).Named("N");
-                rD = new Range(vD).Named("D");
-                rM = new Range(vM).Named("M");
-                
-                // ... as will the data
-                //vData = Variable.Array<double>(rN, rD).Named("data");
-                // ... and the priors
-                //priorAlpha = Variable.New<Gamma>().Named("PriorAlpha");
-                priorMu = Variable.New<Gaussian>().Named("PriorMu");
-                priorPi = Variable.New<Gamma>().Named("PriorPi");
+                rN = new Range(N).Named("N");
+                rD = new Range(D).Named("D");
+                rM = new Range(M).Named("M");
                 
                 // Mixing matrix
-                W = Variable.Array<Vector>(M).Named("W");
-                Alpha = Variable.WishartFromShapeAndRate(2,
-                                                         PositiveDefiniteMatrix.IdentityScaledBy(D,
-                                                                                                 2.0));
-                W[rM] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(D),
-                                                                   Alpha).ForEach(rM);
+                Alpha = Variable.Array<double>(rD).Named("Alpha");
+                Alpha[rD] = Variable.GammaFromShapeAndRate(0.01, 0.01).ForEach(rD);
+                W = Variable.Array<double>(rM, rD).Named("W");
+                W[rM, rD] = Variable.GaussianFromMeanAndPrecision(0, Alpha[rD]).ForEach(rM);
 
                 // Latent variables
-                Z = Variable.Array<Vector>(N).Named("Z");
-                Z[rN] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(D),
-                                                                   PositiveDefiniteMatrix.Identity(D)).ForEach(rN);
+                Z = Variable.Array<double>(rD, rN).Named("Z");
+                Z[rD, rN] = Variable.GaussianFromMeanAndPrecision(0.0, 1.0).ForEach(rD, rN);
 
                 // Multiply
-                ZtimesW = Variable.Array<double>(N, D).Named("ZtimesW");
-                ZtimesW[rM, rN] = Variable.InnerProduct(W[rM], Z[rN]);
-
-                // Bias
-                mu = Variable.Array<double>(M).Named("mu");
-                mu[rM] = Variable.Random<double, Gaussian>(priorMu).ForEach(rM);
-                ZWplusMu = Variable.Array<double>(rM, rN).Named("ZWplusMu");
-                ZWplusMu[rM, rN] = ZtimesW[rM, rN] + mu[rM];
+                var ZtimesW = Variable.MatrixMultiply(W, Z).Named("Z*W");
 
                 // Observation noise
                 //pi = Variable.Array<double>(r
-                pi = Variable.Random<double, Gamma>(priorPi);
+                tau = Variable.GammaFromShapeAndRate(0.01, 0.01);
 
                 // Observations
-                data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZWplusMu[rM,rN], pi);
-
-
-                // Mixing matrix. Each row is drawn from a Gaussian with zero mean and
-                // a precision which will be learnt. This is a form of Automatic
-                // Relevance Determination (ARD). The larger the precisions become, the
-                // less important that row in the mixing matrix is in explaining the data
-                vAlpha = Variable.Array<double>(rM).Named("Alpha");
-                vW = Variable.Array<double>(rM, rD).Named("W");
-                vAlpha[rM] = Variable.Random<double, Gamma>(priorAlpha).ForEach(rM);
-                vW[rM, rD] = Variable.GaussianFromMeanAndPrecision(0, vAlpha[rM]).ForEach(rD);
-                // Latent variables are drawn from a standard Gaussian
-                vZ = Variable.Array<double>(rN, rM).Named("Z");
-                vZ[rN, rM] = Variable.GaussianFromMeanAndPrecision(0.0, 1.0).ForEach(rN, rM);
-                // Multiply the latent variables with the mixing matrix...
-                vT = Variable.MatrixMultiply(vZ, vW).Named("T");
-                // ... add in a bias ...
-                vMu = Variable.Array<double>(rD).Named("mu");
-                vMu[rD] = Variable.Random<double, Gaussian>(priorMu).ForEach(rD);
-                vU = Variable.Array<double>(rN, rD).Named("U");
-                vU[rN, rD] = vT[rN, rD] + vMu[rD];
-                // ... and add in some observation noise ...
-                vPi = Variable.Array<double>(rD).Named("pi");
-                vPi[rD] = Variable.Random<double, Gamma>(priorPi).ForEach(rD);
-                // ... to give the likelihood of observing the data
-                vData[rN, rD] = Variable.GaussianFromMeanAndPrecision(vU[rN, rD], vPi[rD]);
+                data = Variable.Array<double>(rM, rN).Named("Y");
+                data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZtimesW[rM, rN], tau);
 
                 // End evidence/lowerbound block
                 block.CloseBlock();
@@ -131,13 +104,29 @@ namespace MicrosoftResearch.Infer.Tutorials
                 // Inference engine
                 engine = new InferenceEngine(new VariationalMessagePassing());
 
+		W.InitialiseTo(randomGaussianArray(M, D));
+                engine.NumberOfIterations = 0;
                         
+
                 return;
+            }
+        
+        private static IDistribution<double[,]> randomGaussianArray(int row, int col)
+            {
+                Gaussian[,] array = new Gaussian[row, col];
+                for (int i = 0; i < row; i++)
+                {
+                    for (int j = 0; j < col; j++)
+                    {
+                        array[i, j] = Gaussian.FromMeanAndVariance(Rand.Normal(), 1);
+                    }
+                }
+                return Distribution<double>.Array(array);
             }
     }
 //*/
 
-    public class BayesianPCAModel
+    public class BayesianPCAModel_Full : BayesianPCAModel
     {
         // Inference engine
         public InferenceEngine engine = null;
@@ -145,7 +134,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         public Variable<PositiveDefiniteMatrix> Alpha = null;
         public VariableArray<Vector> W = null;
         public VariableArray<Vector> Z = null;
-        public VariableArray<double> mu = null;
+        //public VariableArray<double> mu = null;
         public VariableArray2D<double> data = null;
         public Variable<double> tau = null;
         public Range rN = null;
@@ -155,7 +144,31 @@ namespace MicrosoftResearch.Infer.Tutorials
         // Variable for computing the lower bound
         public Variable<bool> evidence = Variable.Bernoulli(0.5).Named("evidence");
 
-        public BayesianPCAModel(int M, int N, int D)
+        public void observe(double[,] obs)
+            {
+                data.ObservedValue = obs;
+            }
+
+        public void update()
+            {
+                engine.NumberOfIterations++;
+                engine.Infer(Alpha);
+                engine.Infer(W);
+                engine.Infer(Z);
+                engine.Infer(tau);
+            }
+
+        public double bound()
+            {
+                return engine.Infer<Bernoulli>(evidence).LogOdds;                
+            }
+
+        public void print()
+            {
+                Console.WriteLine("q(tau) =\n" + engine.Infer(tau));
+            }
+        
+        public void create(int M, int N, int D)
             {
 
                 // Stuff for the lower bound / evidence
@@ -187,22 +200,7 @@ namespace MicrosoftResearch.Infer.Tutorials
                 var ZtimesW = Variable.Array<double>(rM, rN).Named("ZtimesW");
                 ZtimesW[rM, rN] = Variable.InnerProduct(W[rM], Z[rN]);
 
-                // Bias
-                /*
-                mu = Variable.Array<double>(rM).Named("mu");
-                mu[rM] = Variable.Random<double, Gaussian>(priorMu).ForEach(rM);
-                var ZWplusMu = Variable.Array<double>(rM, rN).Named("ZWplusMu");
-                ZWplusMu[rM, rN] = ZtimesW[rM, rN] + mu[rM];
-                //*/
-
-                // Observation noise
-                // Set the priors
-                //bpca.priorPi.ObservedValue = Gamma.FromShapeAndRate(0.01, 0.01);
-                //bpca.priorAlpha.ObservedValue = Gamma.FromShapeAndRate(2.0, 2.0);
-                //priorPi = Variable.New<Gamma>().Named("PriorPi");
-                //pi = Variable.Array<double>(rM).Named("pi");
                 tau = Variable.GammaFromShapeAndRate(0.01, 0.01);
-                //pi[rM] = Variable.Random<double, Gamma>(priorPi).ForEach(rM);
 
                 // Observations
                 data = Variable.Array<double>(rM, rN).Named("Y");
@@ -214,88 +212,11 @@ namespace MicrosoftResearch.Infer.Tutorials
                 // Inference engine
                 engine = new InferenceEngine(new VariationalMessagePassing());
 
-                return;
-            }
-
-    }
-
-    public class BayesianPCA
-    {
-
-        static void Main(string[] args)
-            {
-                    
-                Console.Write("Running PCA.\n");
-                BayesianPCA bpca = new BayesianPCA();
-                bpca.Run(int.Parse(args[0]),  // components
-                         int.Parse(args[1]),  // seed
-                         int.Parse(args[2])); // maxiter
-                return;
-            }
-
-        public double get_cputime()
-            {
-                Process process = Process.GetCurrentProcess();
-                return process.TotalProcessorTime.TotalMilliseconds;
-            }
-            
-        public void Run(int D, int seed, int maxiter)
-            {
-                
-                // Restart the infer.NET random number generator
-                Rand.Restart(seed);
-
-                // Load data
-                double[,] data = LoadData(string.Format("pca-data-{0:00}.csv", seed));
-
-                // Construct model
-                int M = data.GetLength(0);
-                int N = data.GetLength(1);
-                Console.WriteLine("M={0} and N={1}\n", M, N);
-                BayesianPCAModel bpca = new BayesianPCAModel(M, N, D);
-                if (!(bpca.engine.Algorithm is VariationalMessagePassing))
-                {
-                    Console.WriteLine("This example only runs with Variational Message Passing");
-                    return;
-                }
-	
-                // Set the data
-                bpca.data.ObservedValue = data;
                 // Initialize the W marginal to break symmetry
-                bpca.W.InitialiseTo(RandomGaussianVectorArray(M, D));
+                W.InitialiseTo(RandomGaussianVectorArray(M, D));
+                engine.NumberOfIterations = 0;
 
-                double logEvidence = 0;
-                var loglike = new List<double>();
-                var cputime = new List<double>();
-                double starttime, endtime;
-                for (int j=0; j < maxiter; j++)
-                {
-                    starttime = get_cputime();
-                    bpca.engine.NumberOfIterations = j+1;
-                    // Infer the marginals
-                    //bpca.engine.Infer(bpca.Alpha);
-                    bpca.engine.Infer(bpca.W);
-                    bpca.engine.Infer(bpca.Z);
-                    bpca.engine.Infer(bpca.tau);
-                    // Measure CPU time
-                    endtime = get_cputime();
-                    cputime.Add((endtime - starttime) / 1000.0);
-                    // Compute lower bound
-                    logEvidence = bpca.engine.Infer<Bernoulli>(bpca.evidence).LogOdds;
-                    // Print progress
-                    Console.WriteLine("Iteration {0}: loglike={1} ({2} ms)",
-                                      j+1,
-                                      logEvidence,
-                                      endtime - starttime);
-                }
-                
-                SaveResults(string.Format("pca-results-{0:00}-infernet.csv", seed),
-                            loglike.ToArray(), cputime.ToArray());
-                
-                //Console.WriteLine("q(W) =\n" + bpca.engine.Infer(bpca.W));
-                //Console.WriteLine("q(X) =\n" + bpca.engine.Infer(bpca.Z));
-                Console.WriteLine("q(tau) =\n" + bpca.engine.Infer(bpca.tau));
-
+                return;
             }
 
         public static IDistribution<Vector[]> RandomGaussianVectorArray(int N, int C)
@@ -309,19 +230,101 @@ namespace MicrosoftResearch.Infer.Tutorials
                 }
                 return Distribution<Vector>.Array(array);
             }
-        //*/
+    }
 
-        private static void printMatrixToConsole(Gaussian[,] matrix)
+    public class Program
+    {
+        
+        static void Main(string[] args)
             {
-                for (int i = 0; i < matrix.GetLength(0); i++)
-                {
-                    for (int j = 0; j < matrix.GetLength(1); j++)
-                        Console.Write("{0,5:0.00}\t", matrix[i, j].GetMean());
-                    Console.WriteLine("");
-                }
+                    
+                Console.Write("Running PCA.\n");
+                var bpca = new BayesianPCA();
+                bool factorize = int.Parse(args[3]) != 0;
+                bpca.Run(int.Parse(args[0]),  // components
+                         int.Parse(args[1]),  // seed
+                         int.Parse(args[2]),  // maxiter
+                         factorize);
+                return;
             }
 
-        
+    }
+
+    
+    public class BayesianPCA
+    {
+
+        public void Run(int D, int seed, int maxiter, bool factorize)
+            {
+                
+                // Restart the infer.NET random number generator
+                Rand.Restart(seed);
+
+                // Load data
+                double[,] data = LoadData(string.Format("pca-data-{0:00}.csv", seed));
+
+                // Construct model
+                int M = data.GetLength(0);
+                int N = data.GetLength(1);
+                Console.WriteLine("M={0} and N={1}\n", M, N);
+                BayesianPCAModel bpca;
+                if (factorize)
+                {
+                    bpca = new BayesianPCAModel_Factorized();
+                }
+                else
+                {
+                    bpca = new BayesianPCAModel_Full();
+                }
+                bpca.create(M, N, D);
+	
+                // Set the data
+                bpca.observe(data); //data.ObservedValue = data;
+
+                double logEvidence = 0;
+                var loglike = new List<double>();
+                var cputime = new List<double>();
+                double starttime, endtime;
+                for (int j=0; j < maxiter; j++)
+                {
+                    starttime = get_cputime();
+                    bpca.update();
+                    /*
+                    bpca.engine.NumberOfIterations = j+1;
+                    // Infer the marginals
+                    //bpca.engine.Infer(bpca.Alpha);
+                    bpca.engine.Infer(bpca.W);
+                    bpca.engine.Infer(bpca.Z);
+                    bpca.engine.Infer(bpca.tau);
+                    //*/
+                    // Measure CPU time
+                    endtime = get_cputime();
+                    cputime.Add((endtime - starttime) / 1000.0);
+                    // Compute lower bound
+                    logEvidence = bpca.bound(); //bpca.engine.Infer<Bernoulli>(bpca.evidence).LogOdds;
+                    // Print progress
+                    Console.WriteLine("Iteration {0}: loglike={1} ({2} ms)",
+                                      j+1,
+                                      logEvidence,
+                                      endtime - starttime);
+                }
+                
+                SaveResults(string.Format("pca-results-{0:00}-infernet.csv", seed),
+                            loglike.ToArray(), cputime.ToArray());
+                
+                //Console.WriteLine("q(W) =\n" + bpca.engine.Infer(bpca.W));
+                //Console.WriteLine("q(X) =\n" + bpca.engine.Infer(bpca.Z));
+                //Console.WriteLine("q(tau) =\n" + bpca.engine.Infer(bpca.tau));
+                bpca.print();
+
+            }
+
+        public double get_cputime()
+            {
+                Process process = Process.GetCurrentProcess();
+                return process.TotalProcessorTime.TotalMilliseconds;
+            }
+            
         public double[,] LoadData(string filename)
             {
                 StreamReader sr = new StreamReader(Path.GetFullPath(filename));
