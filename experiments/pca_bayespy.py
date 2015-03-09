@@ -39,7 +39,7 @@ import bayespy.plot as bpplt
 def model(M, N, D):
     # Construct the PCA model with ARD
 
-    if False:
+    if True:
         # ARD covariance
         alpha = nodes.Gamma(1e-2,
                             1e-2,
@@ -104,9 +104,15 @@ def model(M, N, D):
 
 def generate_data(M, N, D, seed=1):
     np.random.seed(seed)
-    W = np.random.randn(M, D)
+    #U = np.linalg.qr(np.random.randn(M,M))[0]
+    #V = np.linalg.qr(np.random.randn(N,N))[0]
+    #S = np.eye(M, N)
+    #S[:D,:D] *= np.linspace(8, 8, D) #(1 + np.arange(D))
+    #y = np.dot(U, np.dot(S, V))
+    W = np.random.randn(M, D) / D
     X = np.random.randn(D, N)
-    y = np.dot(W, X) + 0.5*np.random.randn(M, N)
+    y = np.dot(W, X) + 0.3*np.random.randn(M, N)
+    (u,s,v) = np.linalg.svd(y)
     np.savetxt('pca-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
     return y
 
@@ -143,7 +149,7 @@ def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
     Q.update(repeat=maxiter, tol=0)
 
     v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
-    np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")
+    np.savetxt("pca-results-%02d-bayespy.csv" % seed, v, delimiter=",")
 
     print(Q['tau'])
 

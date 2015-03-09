@@ -48,19 +48,25 @@ namespace MicrosoftResearch.Infer.Tutorials
                 // Mixture component means
                 means = Variable.Array<Vector>(k).Named("means");			
                 means[k] = Variable.VectorGaussianFromMeanAndPrecision(
-                    Vector.Zero(d.SizeAsInt),
-                    PositiveDefiniteMatrix.IdentityScaledBy(d.SizeAsInt,0.01)).ForEach(k);
+                    Vector.Zero(D),
+                    PositiveDefiniteMatrix.IdentityScaledBy(D, 0.01)
+                ).ForEach(k);
 	
                 // Mixture component precisions
+                // NOTE: Compared to BayesPy, prior parameters are multiplied by
+                // 0.5 because of different parameterization of the Wishart
+                // distribution.
                 precs = Variable.Array<PositiveDefiniteMatrix>(k).Named("precs");
-                precs[k] = Variable.WishartFromShapeAndRate(d.SizeAsInt,
-                                                            PositiveDefiniteMatrix.IdentityScaledBy(d.SizeAsInt,d.SizeAsInt)).ForEach(k);
+                precs[k] = Variable.WishartFromShapeAndRate(
+                    0.5*D,
+                    PositiveDefiniteMatrix.IdentityScaledBy(D, 0.5*D)
+                ).ForEach(k);
 			
                 // Mixture weights
                 double[] a = new double[K];
                 for (int i = 0; i < K; i++)
                 {
-                    a[i] = 1;
+                    a[i] = 0.1;
                 }
                 weights = Variable.Dirichlet(k, a).Named("weights");	
 
@@ -131,7 +137,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 mog.z.InitialiseTo(Distribution<int>.Array(zinit));
 
                 // The inference
-                //Process proc = Process.GetCurrentProcess();
                 double logEvidence = 0;
                 var loglike = new List<double>();
                 var cputime = new List<double>();
@@ -161,8 +166,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 }
 
                 Console.WriteLine("Dist over pi=" + mog.engine.Infer(mog.weights));
-                //Console.WriteLine("Dist over means=\n" + mog.ie.Infer(mog.means));
-                //Console.WriteLine("Dist over precs=\n" + mog.ie.Infer(mog.precs));
 
                 SaveResults(string.Format("mog-results-{0:00}-infernet.csv", seed),
                             loglike.ToArray(), cputime.ToArray());

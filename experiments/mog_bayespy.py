@@ -42,7 +42,7 @@ def mog_model(N, K, D):
     # Construct the Gaussian mixture model
 
     # K prior weights (for components)
-    alpha = nodes.Dirichlet(1.0*np.ones(K),
+    alpha = nodes.Dirichlet(0.1*np.ones(K),
                             name='alpha')
     # N K-dimensional cluster assignments (for data)
     z = nodes.Categorical(alpha,
@@ -62,19 +62,19 @@ def mog_model(N, K, D):
     # Break symmetry
     z.initialize_from_random()
 
-    return VB(Y, mu, Lambda, z, alpha)
+    return VB(Y, mu, z, Lambda, alpha)
 
 
-def generate_data(N, D, K, seed=1):
+def generate_data(N, D, K, seed=1, spread=3):
     """
     Generate data from a mixture of Gaussians model
     """
 
     np.random.seed(seed)
 
-    mu = 3*np.random.randn(K, D)
+    mu = spread*np.random.randn(K, D)
     # Lambda is actually precision matrix (inverse covariance)
-    Lambda = random.covariance(D, size=K)
+    Lambda = random.covariance(D, size=K, nu=2*D)
     pi = random.dirichlet(5*np.ones(K))
 
     y = np.zeros((N,D))
@@ -85,9 +85,8 @@ def generate_data(N, D, K, seed=1):
 
     np.savetxt('mog-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
 
-    print(mu)
-    plt.plot(y[:,0], y[:,1], 'rx')
-    plt.show()
+    #plt.plot(y[:,0], y[:,1], 'rx')
+    #plt.show()
 
     return y
 
@@ -99,11 +98,11 @@ def plot(seed=1, maxiter=None):
     utils.plot('mog', seed, maxiter=maxiter)
 
 
-def run(N=2000, D=3, K=20, seed=1, maxiter=200):
+def run(N=2000, D=3, K=20, seed=1, maxiter=200, spread=3.0):
 
     # Get data
     print("Generating data...")
-    y = generate_data(N, D, np.ceil(K/2), seed=seed)
+    y = generate_data(N, D, int(np.ceil(K/2)), seed=seed, spread=spread)
 
     # Construct model
     Q = mog_model(N, K, D)
@@ -113,10 +112,10 @@ def run(N=2000, D=3, K=20, seed=1, maxiter=200):
 
     # Run inference
     print("Running inference...")
-    Q.update(repeat=maxiter, tol=0)
+    Q.update(repeat=maxiter, tol=-1e-6)
 
     print(Q['alpha'])
-    print(Q['mu'])
+    #print(Q['mu'])
 
     v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
     np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")
@@ -131,6 +130,7 @@ if __name__ == '__main__':
                                     "d=",
                                     "k=",
                                     "maxiter=",
+                                    "spread=",
                                     "seed="])
     except getopt.GetoptError:
         print('python mog_bayespy.py <options>')
@@ -138,6 +138,7 @@ if __name__ == '__main__':
         print('--d=<INT>        Dimensionality of the latent vectors in the model')
         print('--k=<INT>        Dimensionality of the true latent vectors')
         print('--maxiter=<INT>  Maximum number of VB iterations')
+        print('--spread=<NUM>   Std/spread for true cluster means')
         print('--seed=<INT>     Seed (integer) for the random number generator')
         sys.exit(2)
 
@@ -151,6 +152,8 @@ if __name__ == '__main__':
             kwargs["D"] = int(arg)
         elif opt in ("--k",):
             kwargs["K"] = int(arg)
+        elif opt in ("--spread",):
+            kwargs["spread"] = float(arg)
         elif opt in ("--maxiter",):
             kwargs["maxiter"] = int(arg)
 

@@ -302,6 +302,7 @@ namespace MicrosoftResearch.Infer.Tutorials
                     cputime.Add((endtime - starttime) / 1000.0);
                     // Compute lower bound
                     logEvidence = bpca.bound(); //bpca.engine.Infer<Bernoulli>(bpca.evidence).LogOdds;
+                    loglike.Add(logEvidence);
                     // Print progress
                     Console.WriteLine("Iteration {0}: loglike={1} ({2} ms)",
                                       j+1,
