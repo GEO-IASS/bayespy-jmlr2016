@@ -136,12 +136,15 @@ provides instructions for implementing new nodes.
 BayesPy is designed to be simple enough for average users but flexible and
 efficient enough for expert users.  One goal is to keep the syntax easy and
 intuitive to read and write by making it similar to the mathematical formulation
-of the model.  Other notable features of BayesPy include easy handling of
-missing values, parameter expansions \citep{Qi:2007} for speeding up inference
-and monitoring of the variables by plotting the posterior distributions during
-the message passing iteration.  For developers, the unit testing framework helps
-in finding bugs, making changes and implementing new features in a robust
-manner.
+of the model.  Missing values are easy to handle and the variables can be
+monitored by plotting the posterior distributions during the learning.  BayesPy
+has also preliminary support for some advanced VB methods such as stochastic
+variational inference \citep{Hoffman:2013}, deterministic annealing
+\citep{Katahira:2008}, collapsed inference \citep{Hensman:2012},
+Riemannian-gradient-based optimization \citep{Honkela:2010}, parameter
+expansions \citep{Qi:2007} and pattern searches \citep{Honkela:2003}.  For
+developers, the unit testing framework helps in finding bugs, making changes and
+implementing new features in a robust manner.
 
 
 
