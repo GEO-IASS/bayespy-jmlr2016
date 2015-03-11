@@ -30,6 +30,45 @@
 \ShortHeadings{BayesPy: Variational Bayesian Inference in Python}{Luttinen}
 \firstpageno{1}
 
+\lstset{ %
+  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{green},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+%  frame=single,                    % adds a frame around the code
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue},       % keyword style
+  morekeywords={*,...},            % if you want to add more keywords to the set
+  firstnumber=last,
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=10pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{black}, % the style that is used for the line-numbers
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{orange},     % string literal style
+  tabsize=2,                       % sets default tabsize to 2 spaces
+%  title=\lstname,                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=1.3\parindent,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+%  keywordstyle=\bfseries\color{green!40!black},
+%  commentstyle=\itshape\color{purple!40!black},
+%  identifierstyle=\color{blue},
+%  stringstyle=\color{orange},
+  language=Python
+}
+
+
 \begin{document}
 
 \title{BayesPy: Variational Bayesian Inference in Python}
@@ -98,14 +137,13 @@ source and maintained VB software package.
 \section{Features}
 
 
-BayesPy can be used to construct a wide range of conjugate exponential family
-models.  The documentation provides detailed examples of how to construct, for
-instance, regression models, principal component analysis models, linear
-state-space models, mixture models and hidden Markov models.  In addition,
-BayesPy has been used in two publications about parameter expansion and
-time-varying dynamics for linear state-space models
-\citep{Luttinen:2013,Luttinen:2014}, which show that it is applicable to large
-complex models requiring efficient inference.
+BayesPy can be used to construct conjugate exponential family models.  The
+documentation provides detailed examples of how to construct, for instance,
+regression models, principal component analysis models, linear state-space
+models, mixture models and hidden Markov models.  In addition, BayesPy has been
+used in two publications about parameter expansion and time-varying dynamics for
+linear state-space models \citep{Luttinen:2013,Luttinen:2014}, which show that
+it is applicable to large complex models requiring efficient inference.
 
 
 
@@ -183,139 +221,253 @@ platform used for reporting bugs and making pull requests.
 
 \section{Example}
 
-\lstset{ %
-  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
-  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
-  breaklines=true,                 % sets automatic line breaking
-  captionpos=b,                    % sets the caption-position to bottom
-  commentstyle=\color{green},    % comment style
-  deletekeywords={...},            % if you want to delete keywords from the given language
-  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
-  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
-%  frame=single,                    % adds a frame around the code
-  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
-  keywordstyle=\color{blue},       % keyword style
-  morekeywords={*,...},            % if you want to add more keywords to the set
-  firstnumber=last,
-  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
-  numbersep=10pt,                   % how far the line-numbers are from the code
-  numberstyle=\tiny\color{black}, % the style that is used for the line-numbers
-  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
-  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
-  showstringspaces=false,          % underline spaces within strings only
-  showtabs=false,                  % show tabs within strings adding particular underscores
-  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
-  stringstyle=\color{orange},     % string literal style
-  tabsize=2,                       % sets default tabsize to 2 spaces
-%  title=\lstname,                   % show the filename of files included with \lstinputlisting; also try caption instead of title
-  belowcaptionskip=1\baselineskip,
-  breaklines=true,
-  frame=L,
-  xleftmargin=1.3\parindent,
-  showstringspaces=false,
-  basicstyle=\footnotesize\ttfamily,
-%  keywordstyle=\bfseries\color{green!40!black},
-%  commentstyle=\itshape\color{purple!40!black},
-%  identifierstyle=\color{blue},
-%  stringstyle=\color{orange},
-  language=Python
-}
-
-\begin{figure}
-  \centering
-  \begin{tikzpicture}
-    \node [obs] (yn) {$y_n$};
-    \node [latent, above left=of yn] (mu) {$\mu$};
-    \node [latent, above right=of yn] (tau) {$\tau$};
-
-    \edge {mu, tau} {yn};
-
-    \tikzstyle{plate caption} = [caption, node distance=0, inner sep=0pt,
-    below=5pt of #1.south]
-
-    \plate {} {(yn)} {$n=1,\ldots,10$};
-  \end{tikzpicture}
-  \caption{Graphical model of the example problem.}
-  \label{fig:graphical_model}
-\end{figure}
-In order to demonstrate BayesPy, this section solves an extremely simple problem
-but which includes the main steps of using BayesPy.  The task is to estimate the
-unknown mean and precision parameters of a Gaussian distribution given ten
-observations.  Thus, the likelihood function is Gaussian:
-\begin{align*}
-  p(y_1,\ldots,y_{10}|\mu,\tau) &= \prod^{10}_{n=1}\mathcal{N}(y_n | \mu, \tau),
-\end{align*}
-where the Gaussian distribution is parameterized by precision instead of
-variance.  The unknown mean $\mu$ and precision $\tau$ are given broad Gaussian
-and gamma priors, respectively:
-\begin{align*}
-  p(\mu) &= \mathcal{N}(\mu|0, 10^{-6}), & p(\tau) &= \mathcal{G}(\tau|10^{-6},
-  10^{-6}).
-\end{align*}
-Figure~\ref{fig:graphical_model} shows the graphical model of this simple model.
-The model is constructed in BayesPy by creating nodes:
+This section demonstrates BayesPy with a Gaussian mixture model.  A simple
+artificial dataset is created by drawing 200 samples from a 2-dimensional
+Gaussian distribution.  80 samples have mean $[1, 1]$ and 120 samples have mean
+$[0, 0]$:
 \begin{lstlisting}
-from bayespy.nodes import GaussianARD, Gamma
-mu = GaussianARD(0, 1e-6)
-tau = Gamma(1e-6, 1e-6)
+import numpy as np
+N = 200, D = 2
+data = np.random.randn(N, D)
+data[:80,:] += np.ones(D)
 \end{lstlisting}
-These two nodes represent the two unknown variables that we are interested in.
-They are the parameters of the Gaussian distribution of the observed variable:
+We construct a mixture model for the data and assume that the parameters and the
+cluster assignments are unknown, even the true number of clusters.  The model
+uses a maximum number of five clusters but the effective number of clusters will
+be determined automatically:
 \begin{lstlisting}
-y = GaussianARD(mu, tau, plates=(10,))
+K = 5
 \end{lstlisting}
-The number of observations is given as plates which define the number of
-repetitions.  Note that the syntax of the model construction is similar to the
-mathematical formulation which defines the conditional distributions for each
-variable.  Thus, it is easy to understand the model from the Python code.  After
-the model has been constructed, some nodes are marked as observed and given
-data:
+The unknown cluster means and precision matrices are given Gaussian and Wishart
+prior distributions:
 \begin{lstlisting}
-y.observe([4.5, 3.9, 6.3, 5.6, 4.9, 2.8, 7.4, 6.1, 4.8, 2.1])
+from bayespy import nodes
+mu = nodes.Gaussian(np.zeros(D), 0.01*np.identity(D), plates=(K,))
+Lambda = nodes.Wishart(D, 0.01*np.identity(D), plates=(K,))
+\end{lstlisting}
+The \texttt{plates} keyword argument is used to define repetitions similarly as
+the plate notation in graphical models.  The cluster assignments are categorical
+variables, and the cluster probabilities are given a Dirichlet prior
+distribution:
+\begin{lstlisting}
+alpha = nodes.Dirichlet(0.01*np.ones(K))
+z = nodes.Categorical(alpha, plates=(N,))
+\end{lstlisting}
+The observations are from a Gaussian mixture distribution:
+\begin{lstlisting}
+y = nodes.Mixture(Z, nodes.Gaussian, mu, Lambda)
+\end{lstlisting}
+The second argument for the \texttt{Mixture} node defines the type of the
+mixture distribution, in this case Gaussian.  The variable is marked as observed
+by providing the data:
+\begin{lstlisting}
+y.observe(data)
 \end{lstlisting}
 Next, we want to find the posterior approximation for our latent variables.  We
-create the VB inference engine:
+create the variational Bayesian inference engine:
 \begin{lstlisting}
 from bayespy.inference import VB
-Q = VB(y, mu, tau)
+Q = VB(y, mu, z, Lambda, alpha)
 \end{lstlisting}
-The inference engine takes all the stochastic nodes of the model as input.  The
-message passing algorithm can be run by calling \texttt{update} method:
+Before running the VMP algorithm, the symmetry in the model is broken by
+a random initialization of the cluster assignments:
+\begin{lstlisting}
+z.initialize_from_random()
+\end{lstlisting}
+Without the random initialization, the clusters would not be separated.  The VMP
+algorithm is run for 100 iterations or until convergence:
 \begin{lstlisting}
 Q.update(repeat=100)
 \end{lstlisting}
-The algorithm is run for 100 iterations or until it converges.  In this case,
-the algorithm converges in four iterations.  The posterior approximation can be
-examined, for instance, by plotting the probability density functions of the
-latent variables:
+The results can be examined, for instance, by printing the posterior
+distributions of some variables:
 \begin{lstlisting}
-import bayespy.plot as bpplt
-import numpy as np
-bpplt.pyplot.figure()
-bpplt.pdf(Q[mu], np.linspace(0, 10, num=300))
-bpplt.pyplot.figure()
-bpplt.pdf(Q[tau], np.linspace(0, 2, num=300))
-bpplt.pyplot.show()
+print(alpha)
+print(mu)
 \end{lstlisting}
-Figure~\ref{fig:posterior} shows the resulting approximate posterior
-distributions.  The module \texttt{bayespy.plot} contains functions for simple
-plotting tasks, such as plotting the probability density function or the Hinton
-diagram of a variable.  Note that the standard \texttt{pyplot} module of
-Matplotlib is available at the \texttt{plot} module of BayesPy.
-\begin{figure}
-  \begin{center}
-    \begin{subfigure}[b]{0.4\textwidth}
-      \includegraphics[width=\textwidth]{fig_mu}
-      \caption{$q(\mu)$}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.4\textwidth}
-      \includegraphics[width=\textwidth]{fig_tau}
-      \caption{$q(\tau)$}
-    \end{subfigure}
-  \end{center}
-  \caption{The posterior approximations of $\mu$ and $\tau$.}
-  \label{fig:posterior}
-\end{figure}
+In addition, module \texttt{bayespy.plot} contains several plotting functions to
+examine the results visually.
+
+
+\section{Comparison with Infer.NET}
+
+
+This section provides a brief comparison with Infer.NET because it is another
+active project implementing the variational message passing algorithm, whereas
+the other related active projects implement MCMC.  The main advantages of
+Infer.NET over BayesPy are its support for non-conjugate models and other
+inference engines.  On the other hand, BayesPy is open-source software and
+supports several advanced VB methods (e.g., stochastic variational inference and
+collapsed inference).
+
+
+The speed of the packages were compared by using two widely used models: a
+Gaussian mixture model (GMM) and principal component analysis
+(PCA).\footnote{The scripts for running the experiments are available in the
+  supplementary material.}  Both models were run for small and large
+artificially generated datasets.  For GMM, the small model used 10 clusters for
+200 observations with 2 dimensions, and the large model used 40 clusters for
+2000 observations with 10 dimensions.  For PCA, the small model used
+10-dimensional latent space for 500 observations with 20 dimensions, and the
+large model used 40-dimensional latent space for 2000 observations with 100
+dimensions.  Infer.NET used a fully factorizing approximation for the PCA model,
+whereas BayesPy did not factorize with respect to the latent space dimensions.
+The experiments were run on a Linux computer with a quad-core processor
+(i7-4702MQ).  Because the packages run practically identical algorithms and thus
+converged to similar solutions in a similar number of iterations (50--100
+iterations depending on the dataset), we compare the average CPU time per
+iteration.
+
+
+The results are summarized in Table~\ref{tab:speed}.  On the smaller datasets,
+Infer.NET is slightly faster because BayesPy has some overhead from using
+Python.  However, on the larger datasets, BayesPy is significantly faster
+because it uses BLAS and LAPACK libraries for fast numerical
+operations.\footnote{NumPy must use BLAS/LAPACK because BayesPy uses NumPy for
+  numerical operations.}  In addition, if using multi-threaded BLAS/LAPACK, the
+difference in wall-clock time can be even larger than in CPU time.  The speed of
+BayesPy for these models could potentially be improved by using collapsed or
+stochastic variational inference, and the accuracy could be improved by using
+Gaussian-Wishart nodes which do not factorize with respect to the Gaussian and
+Wishart variables.
+
+\begin{table}[tb]
+  \centering
+  \caption{The average CPU time (in milliseconds) per iteration for each dataset.}
+  \small
+  \begin{tabular}{ccccc}
+    &
+    Small GMM
+    &
+    Large GMM
+    &
+    Small PCA
+    &
+    Large PCA
+    \\
+    \hline
+    BayesPy     & 45 & 210  & 52 & 380
+    \\
+    Infer.NET   & 26 & 4400 & 37 & 2200
+  \end{tabular}
+  \label{tab:speed}
+\end{table}
+
+
+% related active software projects discussed in the introduction,
+
+% Because the other
+% active Bayesian software packages discussed in the introduction do not implement
+% the variational message passing algorithm,
+
+%* compiled
+
+%* non-conjugate
+
+%* other engines
+
+%* open source
+
+%* advanced
+
+
+%* dynamic nodes
+
+% \begin{figure}
+%   \centering
+%   \begin{tikzpicture}
+%     \node [obs] (yn) {$y_n$};
+%     \node [latent, above left=of yn] (mu) {$\mu$};
+%     \node [latent, above right=of yn] (tau) {$\tau$};
+
+%     \edge {mu, tau} {yn};
+
+%     \tikzstyle{plate caption} = [caption, node distance=0, inner sep=0pt,
+%     below=5pt of #1.south]
+
+%     \plate {} {(yn)} {$n=1,\ldots,10$};
+%   \end{tikzpicture}
+%   \caption{Graphical model of the example problem.}
+%   \label{fig:graphical_model}
+% \end{figure}
+% In order to demonstrate BayesPy, this section solves an extremely simple problem
+% but which includes the main steps of using BayesPy.  The task is to estimate the
+% unknown mean and precision parameters of a Gaussian distribution given ten
+% observations.  Thus, the likelihood function is Gaussian:
+% \begin{align*}
+%   p(y_1,\ldots,y_{10}|\mu,\tau) &= \prod^{10}_{n=1}\mathcal{N}(y_n | \mu, \tau),
+% \end{align*}
+% where the Gaussian distribution is parameterized by precision instead of
+% variance.  The unknown mean $\mu$ and precision $\tau$ are given broad Gaussian
+% and gamma priors, respectively:
+% \begin{align*}
+%   p(\mu) &= \mathcal{N}(\mu|0, 10^{-6}), & p(\tau) &= \mathcal{G}(\tau|10^{-6},
+%   10^{-6}).
+% \end{align*}
+% Figure~\ref{fig:graphical_model} shows the graphical model of this simple model.
+% The model is constructed in BayesPy by creating nodes:
+% \begin{lstlisting}
+% from bayespy.nodes import GaussianARD, Gamma
+% mu = GaussianARD(0, 1e-6)
+% tau = Gamma(1e-6, 1e-6)
+% \end{lstlisting}
+% These two nodes represent the two unknown variables that we are interested in.
+% They are the parameters of the Gaussian distribution of the observed variable:
+% \begin{lstlisting}
+% y = GaussianARD(mu, tau, plates=(10,))
+% \end{lstlisting}
+% The number of observations is given as plates which define the number of
+% repetitions.  Note that the syntax of the model construction is similar to the
+% mathematical formulation which defines the conditional distributions for each
+% variable.  Thus, it is easy to understand the model from the Python code.  After
+% the model has been constructed, some nodes are marked as observed and given
+% data:
+% \begin{lstlisting}
+% y.observe([4.5, 3.9, 6.3, 5.6, 4.9, 2.8, 7.4, 6.1, 4.8, 2.1])
+% \end{lstlisting}
+% Next, we want to find the posterior approximation for our latent variables.  We
+% create the VB inference engine:
+% \begin{lstlisting}
+% from bayespy.inference import VB
+% Q = VB(y, mu, tau)
+% \end{lstlisting}
+% The inference engine takes all the stochastic nodes of the model as input.  The
+% message passing algorithm can be run by calling \texttt{update} method:
+% \begin{lstlisting}
+% Q.update(repeat=100)
+% \end{lstlisting}
+% The algorithm is run for 100 iterations or until it converges.  In this case,
+% the algorithm converges in four iterations.  The posterior approximation can be
+% examined, for instance, by plotting the probability density functions of the
+% latent variables:
+% \begin{lstlisting}
+% import bayespy.plot as bpplt
+% import numpy as np
+% bpplt.pyplot.figure()
+% bpplt.pdf(Q[mu], np.linspace(0, 10, num=300))
+% bpplt.pyplot.figure()
+% bpplt.pdf(Q[tau], np.linspace(0, 2, num=300))
+% bpplt.pyplot.show()
+% \end{lstlisting}
+% Figure~\ref{fig:posterior} shows the resulting approximate posterior
+% distributions.  The module \texttt{bayespy.plot} contains functions for simple
+% plotting tasks, such as plotting the probability density function or the Hinton
+% diagram of a variable.  Note that the standard \texttt{pyplot} module of
+% Matplotlib is available at the \texttt{plot} module of BayesPy.
+% \begin{figure}
+%   \begin{center}
+%     \begin{subfigure}[b]{0.4\textwidth}
+%       \includegraphics[width=\textwidth]{fig_mu}
+%       \caption{$q(\mu)$}
+%     \end{subfigure}
+%     \begin{subfigure}[b]{0.4\textwidth}
+%       \includegraphics[width=\textwidth]{fig_tau}
+%       \caption{$q(\tau)$}
+%     \end{subfigure}
+%   \end{center}
+%   \caption{The posterior approximations of $\mu$ and $\tau$.}
+%   \label{fig:posterior}
+% \end{figure}
 
 \section{Conclusions}
 

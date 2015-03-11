@@ -34,4 +34,13 @@ def plot(method, seed, maxiter=None):
 
     plt.legend(['Infer.NET', 'BayesPy'], loc='lower right')
 
+    print("Method={0}, seed={1}, package={2}, CPU time={3}".format(method,
+                                                                   seed,
+                                                                   "bayespy",
+                                                                   np.mean(result_bp[:,1])))
+    print("Method={0}, seed={1}, package={2}, CPU time={3}".format(method,
+                                                                   seed,
+                                                                   "infernet",
+                                                                   np.mean(result_in[:,1])))
+
 
