@@ -23,7 +23,7 @@
 
 % Heading arguments are {volume}{year}{pages}{submitted}{published}{author-full-names}
 
-\jmlrheading{?}{2014}{?-?}{?/??}{?/??}{Jaakko Luttinen}
+\jmlrheading{?}{2015}{?-?}{?/??}{?/??}{Jaakko Luttinen}
 
 % Short headings should be running head and authors last names
 
@@ -74,7 +74,7 @@
 \title{BayesPy: Variational Bayesian Inference in Python}
 
 \author{\name Jaakko Luttinen \email jaakko.luttinen@aalto.fi \\
-       \addr Department of Information and Computer Science\\
+       \addr Department of Computer Science\\
        Aalto University, Finland}
 
 \editor{?}
@@ -98,39 +98,37 @@
 
 \section{Introduction}
 
-Bayesian framework provides theoretically solid and consistent way to construct
-models and perform inference.  In practice, however, the inference is usually
-analytically intractable and is therefore based on approximation methods such as
-variational Bayes (VB), expectation propagation (EP) and Markov chain Monte
-Carlo (MCMC) \citep{Bishop:2006}.  Deriving and implementing the formulas for an
-approximation method is often straightforward but tedious, time consuming and
-error prone.
+Bayesian framework provides a theoretically solid and consistent way to
+construct models and perform inference.  In practice, however, the inference is
+usually analytically intractable and is therefore based on approximation methods
+such as variational Bayes (VB), expectation propagation (EP) and Markov chain
+Monte Carlo (MCMC) \citep{Bishop:2006}.  Deriving and implementing the formulas
+for an approximation method is often straightforward but tedious, time consuming
+and error prone.
 
 
-BayesPy is a Python package providing tools for constructing Bayesian models and
-performing variational Bayesian inference easily and efficiently.  It is based
-on variational message passing (VMP) framework which defines a simple and local
-message passing protocol \citep{Winn:2005}.  This enables implementation of small
-general modules that can be used as building blocks for large complex models.
-BayesPy offers a comprehensive collection of built-in blocks that can be used to
-build a wide range of models and a simple interface for implementing custom
-blocks.  The package is written for Python 3 and released under the GNU General
-Public License v3.0 (GPLv3).
+BayesPy is a Python 3 package providing tools for constructing models and
+performing VB inference easily and efficiently.  It is based on the variational
+message passing (VMP) framework which defines a simple message passing protocol
+\citep{Winn:2005}.  This enables implementation of small general nodes that can
+be used as building blocks for large complex models.  BayesPy offers a
+comprehensive collection of built-in nodes that can be used to build a wide
+range of models and a simple interface for implementing custom nodes.  The
+package is released under the GNU General Public License v3.0 (GPLv3).
 
 
 Several other projects have similar goals for making Bayesian inference easier
 and faster to apply.  VB inference is available in Bayes Blocks
 \citep{Raiko:2007}, VIBES \citep{Bishop:2002} and Infer.NET \citep{Infer.NET}.
-Bayes Blocks is an open-source C++/Python package but it is limited to scalar
-Gaussian nodes, a few deterministic functions and fully factorial posterior
-approximation, thus making it very limited.  VIBES is an old software package
-for Java, released under the revised BSD license, but it is no longer actively
-developed.  VIBES has been replaced by Infer.NET, which supports a wide range of
-posterior approximations.  However, Infer.NET is partly closed source and
-licensed for non-commercial use only.  Instead of VB inference, mainly MCMC is
-supported by other projects such as PyMC \citep{PyMC}, OpenBUGS \citep{OpenBUGS},
-Dimple \citep{Dimple} and Stan \citep{Stan}.  Thus, there is a need for an open
-source and maintained VB software package.
+Bayes Blocks is an open-source C++/Python package but limited to scalar Gaussian
+nodes and a few deterministic functions, thus making it very limited.  VIBES is
+an old software package for Java, released under the revised BSD license, but it
+is no longer actively developed.  VIBES has been replaced by Infer.NET, which
+%supports a wide range of posterior approximations.  However, Infer.NET
+is partly closed source and licensed for non-commercial use only.  Instead of VB
+inference, mainly MCMC is supported by other projects such as PyMC \citep{PyMC},
+OpenBUGS \citep{OpenBUGS}, Dimple \citep{Dimple} and Stan \citep{Stan}.  Thus,
+there is a need for an open source and maintained VB software package.
 
 
 
@@ -139,11 +137,12 @@ source and maintained VB software package.
 
 BayesPy can be used to construct conjugate exponential family models.  The
 documentation provides detailed examples of how to construct, for instance,
-regression models, principal component analysis models, linear state-space
-models, mixture models and hidden Markov models.  In addition, BayesPy has been
-used in two publications about parameter expansion and time-varying dynamics for
-linear state-space models \citep{Luttinen:2013,Luttinen:2014}, which show that
-it is applicable to large complex models requiring efficient inference.
+principal component analysis models, linear state-space models, mixture models
+and hidden Markov models.  In addition, BayesPy has been used in two
+publications about parameter expansion and time-varying dynamics for linear
+state-space models \citep{Luttinen:2013,Luttinen:2014}.
+% , which show that it is applicable to large complex models requiring efficient
+% inference.
 
 
 
@@ -151,23 +150,28 @@ Using BayesPy for Bayesian inference consists of four main steps: constructing
 the model, providing data, finding the posterior approximation and examining the
 results.  The user constructs the model from small modular blocks called nodes.
 Roughly, each node corresponds to a latent variable, a set of observations or a
-deterministic function.  Some of the nodes may be set as observed by providing
-data.  After that, inference engine is initialized and the message passing
-algorithm is run in order to obtain the posterior approximation.  The resulting
-posterior can be examined, for instance, by using a few built-in plotting
-functions or printing the parameters of the posterior distributions.
+deterministic function.
+%Some of the nodes may be set as observed by providing
+%data.
+The inference engine is used to run the message passing algorithm in order to
+obtain the posterior approximation.  The resulting posterior can be examined,
+for instance, by using a few built-in plotting functions or printing the
+parameters of the posterior distributions.
 
 
 Nodes are the key part of BayesPy as they are used to construct the model.
 There are two types of nodes in BayesPy: stochastic and deterministic.
 Stochastic nodes correspond to probability distributions and deterministic nodes
 correspond to functions.  Built-in stochastic nodes include all common
-exponential family distributions (e.g., Gaussian, gamma, Dirichlet and Poisson
+exponential family distributions (e.g., Gaussian, gamma and Dirichlet
 distributions), a general mixture distribution and a few complex nodes for
 dynamic variables (e.g., discrete and Gaussian Markov chains).  Built-in
-deterministic nodes include a gating node and a general sum-product node.  In
-case a model cannot be constructed using the built-in nodes, the documentation
-provides instructions for implementing new nodes.
+deterministic nodes include a gating node and a general sum-product node.
+%The
+%documentation also provides instructions for implementing new nodes in case the
+%built-in collection is insufficient.
+In case a model cannot be constructed using the built-in nodes, the
+documentation provides instructions for implementing new nodes.
 
 
 
@@ -231,10 +235,10 @@ N = 200, D = 2
 data = np.random.randn(N, D)
 data[:80,:] += np.ones(D)
 \end{lstlisting}
-We construct a mixture model for the data and assume that the parameters and the
-cluster assignments are unknown, even the true number of clusters.  The model
-uses a maximum number of five clusters but the effective number of clusters will
-be determined automatically:
+We construct a mixture model for the data and assume that the parameters, the
+cluster assignments and the true number of clusters are unknown.  The model uses
+a maximum number of five clusters but the effective number of clusters will be
+determined automatically:
 \begin{lstlisting}
 K = 5
 \end{lstlisting}
@@ -320,14 +324,14 @@ iteration.
 
 
 The results are summarized in Table~\ref{tab:speed}.  On the smaller datasets,
-Infer.NET is slightly faster because BayesPy has some overhead from using
-Python.  However, on the larger datasets, BayesPy is significantly faster
-because it uses BLAS and LAPACK libraries for fast numerical
-operations.\footnote{NumPy must use BLAS/LAPACK because BayesPy uses NumPy for
-  numerical operations.}  In addition, if using multi-threaded BLAS/LAPACK, the
-difference in wall-clock time can be even larger than in CPU time.  The speed of
-BayesPy for these models could potentially be improved by using collapsed or
-stochastic variational inference, and the accuracy could be improved by using
+Infer.NET is slightly faster because BayesPy has some overhead of Python.
+However, on the larger datasets, BayesPy is significantly faster because it uses
+BLAS and LAPACK libraries for fast numerical operations.\footnote{Assuming that
+  NumPy uses BLAS/LAPACK because BayesPy uses NumPy for numerical operations.}
+In addition, if using multi-threaded BLAS and LAPACK, the difference in
+wall-clock time can be even larger than in CPU time.  The speed of BayesPy for
+these models could potentially be improved by using collapsed or stochastic
+variational inference, and the accuracy could be improved by using
 Gaussian-Wishart nodes which do not factorize with respect to the Gaussian and
 Wishart variables.
 
@@ -475,11 +479,15 @@ BayesPy provides a simple and efficient way to construct conjugate exponential
 family models and to find the variational Bayesian posterior approximation in
 Python.
 %
-Future plans for BayesPy include implementing more inference engines (e.g.,
-maximum likelihood, expectation propagation and Gibbs sampling), improving the
-VB engine (e.g., collapsed variational inference \citep{Hensman:2012} and
-Riemannian conjugate gradient method \citep{Honkela:2010}) and implementing nodes
-for non-parametric models (e.g., Gaussian processes and Dirichlet processes).
+In addition to the standard variational message passing, it supports several
+advanced methods such as stochastic and collapsed variational inference.  Future
+plans include support for non-conjugate models and non-parametric nodes (e.g.,
+Gaussian and Dirichlet processes).
+% Future plans for BayesPy include implementing more inference engines (e.g.,
+% maximum likelihood, expectation propagation and Gibbs sampling), improving the
+% VB engine (e.g., collapsed variational inference \citep{Hensman:2012} and
+% Riemannian conjugate gradient method \citep{Honkela:2010}) and implementing nodes
+% for non-parametric models (e.g., Gaussian processes and Dirichlet processes).
 
 
 
