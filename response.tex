@@ -50,13 +50,20 @@ More detailed responses for each reviewer are given below.
 
 \begin{itemize}
 
-\item \underline{syntax}
+\item \underline{supported models}
   \\
-  The API in the online documentation (bayespy.org) provides details about the
-  syntax for nodes and methods.  For instance, more details about the syntax of
-  the gating node has been added in the documentation.  However, it is typically
-  better to use Mixture node directly to achieve mixture distributions, as shown
-  in the example in section 3.
+  The revised version makes it more clear that BayesPy supports conjugate
+  exponential family models and does not currently support non-conjugate models.
+  An example of a non-supported model is given in section 4.  Examples of
+  supported popular models are listed in section 2.  Section 3 also provides an
+  example implementation of a Gaussian mixture model, which is much more
+  interesting model than the very simple model in the previous version of the
+  paper.  Because of the page limit, more examples are provided in the online
+  documentation (bayespy.org).  Section 4 also discusses Gaussian mixture and
+  PCA models, which are given implementations in the supplementary material.
+  The results in the section also provide some rough idea about computational
+  costs and how large models can be constructed without using stochastic
+  variational inference.
 
 \item \underline{speed comparison}
   \\
@@ -68,26 +75,19 @@ More detailed responses for each reviewer are given below.
   provides a detailed comparison between BayesPy and Infer.NET, including a
   speed comparison.
 
-\item \underline{supported models}
-  \\
-  The revised version makes it more clear that BayesPy supports conjugate
-  exponential family models and does not currently support non-conjugate models.
-  An example of a non-supported model is given in section 4.  Examples of
-  supported popular models are listed in section 2.  Section 3 also provides an
-  example implementation of a Gaussian mixture model, which is much more
-  interesting model than the very simple model in the previous version of the
-  paper.  Because of the page limit, more examples are provided in the online
-  documentation.  Section 4 also discusses Gaussian mixture and PCA models,
-  which are given implementations in the supplementary material.  The results in
-  the section also provide some rough idea about computational costs and how
-  large models can be constructed without using stochastic variational
-  inference.
-
 \item \underline{scheduling}
   \\
   The updates (and all computations) are performed sequentially, that is,
   variables are updated in turns.  This is now mentioned in Section 3.  Parallel
   computing is not supported.
+
+\item \underline{syntax}
+  \\
+  The API in the online documentation provides details about the syntax for
+  nodes and methods.  For instance, more details about the syntax of the gating
+  node has been added in the documentation.  However, it is typically better to
+  use Mixture node directly to achieve mixture distributions, as shown in the
+  example in section 3.
 
 \end{itemize}
 
@@ -114,18 +114,6 @@ More detailed responses for each reviewer are given below.
   PyPI website (or altenatively some issue in matplotlib), according to my
   understanding.  I hope the reviewer does not experience this issue anymore.
 
-\item \underline{section headings}
-  \\
-  Section 2 is now labelled ``Features''.
-
-\item \underline{user community}
-  \\
-  It is difficult to give any accurate estimates of the size of the user
-  community.  However, based on given stars, the number of forks and reported
-  issues on Github, there seems to be interested users.  In addition, the number
-  of downloads in pypi.org and mloss.org give some idea about the number of
-  users.
-
 \item \underline{speed comparison}
   \\
   The revised version contains a more detailed comparison with Infer.NET.  The
@@ -135,6 +123,18 @@ More detailed responses for each reviewer are given below.
   because Infer.NET seems to offer practically the same functionality, section 4
   provides a detailed comparison between BayesPy and Infer.NET, including a
   speed comparison.
+
+\item \underline{user community}
+  \\
+  It is difficult to give any accurate estimates of the size of the user
+  community.  However, based on given stars, the number of forks and reported
+  issues on Github, there seems to be interested users.  In addition, the number
+  of downloads in pypi.org and mloss.org give some idea about the number of
+  users.
+
+\item \underline{section headings}
+  \\
+  Section 2 is now labelled ``Features''.
 
 \end{itemize}
 
