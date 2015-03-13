@@ -1,3 +1,6 @@
+// Copyright (c) 2015 Jaakko Luttinen
+// MIT License
+
 using System;
 using System.IO;
 using System.Diagnostics;
@@ -38,9 +41,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 IfBlock block = Variable.If(evidence);
 
                 // Define a range for the number of mixture components
-                //K = Variable.New<int>().Named("NumComps");
-                //N = Variable.New<int>().Named("NumObs");
-                //D = Variable.New<int>().Named("NumDims");
                 k = new Range(K).Named("k");
                 n = new Range(N).Named("n");
                 d = new Range(D).Named("d");
@@ -119,8 +119,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 Rand.Restart(seed);
           
                 // Model size
-                //int maxiter = 200;
-                //int K = 40;  // clusters
                 int N = data.Length; // samples
                 int D = data[0].Count; // dimensionality
 
@@ -188,7 +186,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                     }
                     lines.Add(Columns);
                     Row++;
-                    //Console.WriteLine(Row);
                 }
 
                 var array = lines.ToArray();

@@ -92,8 +92,9 @@
 \end{abstract}
 
 \begin{keywords}
-  Variational Bayes, variational message passing, Python, probabilistic
-  programming
+  Variational Bayes, probabilistic programming,
+  %variational message passing,
+  Python
 \end{keywords}
 
 \section{Introduction}
@@ -107,14 +108,15 @@ for an approximation method is often straightforward but tedious, time consuming
 and error prone.
 
 
-BayesPy is a Python 3 package providing tools for constructing models and
-performing VB inference easily and efficiently.  It is based on the variational
-message passing (VMP) framework which defines a simple message passing protocol
-\citep{Winn:2005}.  This enables implementation of small general nodes that can
-be used as building blocks for large complex models.  BayesPy offers a
-comprehensive collection of built-in nodes that can be used to build a wide
-range of models and a simple interface for implementing custom nodes.  The
-package is released under the GNU General Public License v3.0 (GPLv3).
+BayesPy is a Python 3 package providing tools for constructing conjugate
+exponential family models and performing VB inference easily and efficiently.
+It is based on the variational message passing (VMP) framework which defines a
+simple message passing protocol \citep{Winn:2005}.  This enables implementation
+of small general nodes that can be used as building blocks for large complex
+models.  BayesPy offers a comprehensive collection of built-in nodes that can be
+used to build a wide range of models and a simple interface for implementing
+custom nodes.  The package is released under the GNU General Public License v3.0
+(GPLv3).
 
 
 Several other projects have similar goals for making Bayesian inference easier
@@ -160,13 +162,13 @@ parameters of the posterior distributions.
 
 
 Nodes are the key part of BayesPy as they are used to construct the model.
-There are two types of nodes in BayesPy: stochastic and deterministic.
-Stochastic nodes correspond to probability distributions and deterministic nodes
-correspond to functions.  Built-in stochastic nodes include all common
-exponential family distributions (e.g., Gaussian, gamma and Dirichlet
-distributions), a general mixture distribution and a few complex nodes for
-dynamic variables (e.g., discrete and Gaussian Markov chains).  Built-in
-deterministic nodes include a gating node and a general sum-product node.
+BayesPy has two types of nodes: stochastic and deterministic.  Stochastic nodes
+correspond to probability distributions and deterministic nodes correspond to
+functions.  Built-in stochastic nodes include all common exponential family
+distributions (e.g., Gaussian, gamma and Dirichlet distributions), a general
+mixture distribution and a few complex nodes for dynamic variables (e.g.,
+discrete and Gaussian Markov chains).  Built-in deterministic nodes include a
+gating node and a general sum-product node.
 %The
 %documentation also provides instructions for implementing new nodes in case the
 %built-in collection is insufficient.
@@ -183,7 +185,7 @@ monitored by plotting the posterior distributions during the learning.  BayesPy
 has also preliminary support for some advanced VB methods such as stochastic
 variational inference \citep{Hoffman:2013}, deterministic annealing
 \citep{Katahira:2008}, collapsed inference \citep{Hensman:2012},
-Riemannian-gradient-based optimization \citep{Honkela:2010}, parameter
+Riemannian conjugate gradient learning \citep{Honkela:2010}, parameter
 expansions \citep{Qi:2007} and pattern searches \citep{Honkela:2003}.  For
 developers, the unit testing framework helps in finding bugs, making changes and
 implementing new features in a robust manner.
@@ -193,8 +195,9 @@ implementing new features in a robust manner.
 BayesPy can be installed similarly to other Python packages.  It requires Python
 3 and a few popular packages: NumPy, SciPy, matplotlib and h5py.  The latest
 release can be installed from Python Package Index (PyPI) and detailed
-instructions can be found from the comprehensive online documentation
-\citep{bayespy.org}.  The latest development version is available at
+instructions can be found from the comprehensive online
+documentation\footnote{\url{http://bayespy.org}}.  The latest development
+version is available at
 GitHub\footnote{\url{https://github.com/bayespy/bayespy}}, which is also the
 platform used for reporting bugs and making pull requests.
 
@@ -225,15 +228,15 @@ platform used for reporting bugs and making pull requests.
 
 \section{Example}
 
-This section demonstrates BayesPy with a Gaussian mixture model.  A simple
-artificial dataset is created by drawing 200 samples from a 2-dimensional
-Gaussian distribution.  80 samples have mean $[1, 1]$ and 120 samples have mean
-$[0, 0]$:
+This section demonstrates the key steps in using BayesPy.  An artificial
+Gaussian mixture dataset is created by drawing 500 samples from two
+2-dimensional Gaussian distributions.  200 samples have mean $[2, 2]$ and 300
+samples have mean $[0, 0]$:
 \begin{lstlisting}
 import numpy as np
-N = 200, D = 2
+N = 500; D = 2
 data = np.random.randn(N, D)
-data[:80,:] += np.ones(D)
+data[:200,:] += 2*np.ones(D)
 \end{lstlisting}
 We construct a mixture model for the data and assume that the parameters, the
 cluster assignments and the true number of clusters are unknown.  The model uses
@@ -247,7 +250,7 @@ prior distributions:
 \begin{lstlisting}
 from bayespy import nodes
 mu = nodes.Gaussian(np.zeros(D), 0.01*np.identity(D), plates=(K,))
-Lambda = nodes.Wishart(D, 0.01*np.identity(D), plates=(K,))
+Lambda = nodes.Wishart(D, D*np.identity(D), plates=(K,))
 \end{lstlisting}
 The \texttt{plates} keyword argument is used to define repetitions similarly as
 the plate notation in graphical models.  The cluster assignments are categorical
@@ -259,7 +262,7 @@ z = nodes.Categorical(alpha, plates=(N,))
 \end{lstlisting}
 The observations are from a Gaussian mixture distribution:
 \begin{lstlisting}
-y = nodes.Mixture(Z, nodes.Gaussian, mu, Lambda)
+y = nodes.Mixture(z, nodes.Gaussian, mu, Lambda)
 \end{lstlisting}
 The second argument for the \texttt{Mixture} node defines the type of the
 mixture distribution, in this case Gaussian.  The variable is marked as observed
@@ -279,18 +282,26 @@ a random initialization of the cluster assignments:
 z.initialize_from_random()
 \end{lstlisting}
 Without the random initialization, the clusters would not be separated.  The VMP
-algorithm is run for 100 iterations or until convergence:
+algorithm updates the variables in turns and is run for 200 iterations or until
+convergence:
 \begin{lstlisting}
-Q.update(repeat=100)
+Q.update(repeat=200)
 \end{lstlisting}
-The results can be examined, for instance, by printing the posterior
-distributions of some variables:
+The results can be examined visually by using \texttt{bayespy.plot} module:
+\begin{lstlisting}
+import bayespy.plot as bpplt
+bpplt.gaussian_mixture_2d(y, alpha=alpha)
+bpplt.pyplot.show()
+\end{lstlisting}
+It is also possible to print the parameters of the approximate posterior
+distributions:
 \begin{lstlisting}
 print(alpha)
-print(mu)
 \end{lstlisting}
-In addition, module \texttt{bayespy.plot} contains several plotting functions to
-examine the results visually.
+The \texttt{bayespy.plot} module contains also other functions for visually
+examining the distributions.
+%In addition, module \texttt{bayespy.plot} contains several plotting functions to
+%examine the results visually.
 
 
 \section{Comparison with Infer.NET}
@@ -299,15 +310,15 @@ examine the results visually.
 This section provides a brief comparison with Infer.NET because it is another
 active project implementing the variational message passing algorithm, whereas
 the other related active projects implement MCMC.  The main advantages of
-Infer.NET over BayesPy are its support for non-conjugate models and other
-inference engines.  On the other hand, BayesPy is open-source software and
-supports several advanced VB methods (e.g., stochastic variational inference and
-collapsed inference).
+Infer.NET over BayesPy are its support for non-conjugate models (e.g., logistic
+regression) and other inference engines.  On the other hand, BayesPy is
+open-source software and supports several advanced VB methods (e.g., stochastic
+variational inference and collapsed inference).
 
 
 The speed of the packages were compared by using two widely used models: a
 Gaussian mixture model (GMM) and principal component analysis
-(PCA).\footnote{The scripts for running the experiments are available in the
+(PCA).\footnote{The scripts for running the experiments are available as
   supplementary material.}  Both models were run for small and large
 artificially generated datasets.  For GMM, the small model used 10 clusters for
 200 observations with 2 dimensions, and the large model used 40 clusters for
@@ -324,14 +335,15 @@ iteration.
 
 
 The results are summarized in Table~\ref{tab:speed}.  On the smaller datasets,
-Infer.NET is slightly faster because BayesPy has some overhead of Python.
-However, on the larger datasets, BayesPy is significantly faster because it uses
-BLAS and LAPACK libraries for fast numerical operations.\footnote{Assuming that
-  NumPy uses BLAS/LAPACK because BayesPy uses NumPy for numerical operations.}
-In addition, if using multi-threaded BLAS and LAPACK, the difference in
-wall-clock time can be even larger than in CPU time.  The speed of BayesPy for
-these models could potentially be improved by using collapsed or stochastic
-variational inference, and the accuracy could be improved by using
+Infer.NET is slightly faster because BayesPy has some Python overhead.  However,
+the total CPU time for both methods is only a few seconds.  On the larger
+datasets, BayesPy is significantly faster because it uses BLAS and LAPACK
+libraries for fast numerical operations.\footnote{Assuming that NumPy uses
+  BLAS/LAPACK because BayesPy uses NumPy for numerical operations.}  In
+addition, if using multi-threaded BLAS and LAPACK on a multi-core computer, the
+difference in wall-clock time can be even larger than in CPU time.  The speed of
+BayesPy for these models could potentially be improved by using collapsed or
+stochastic variational inference.  The accuracy could be improved by using
 Gaussian-Wishart nodes which do not factorize with respect to the Gaussian and
 Wishart variables.
 
@@ -358,121 +370,6 @@ Wishart variables.
 \end{table}
 
 
-% related active software projects discussed in the introduction,
-
-% Because the other
-% active Bayesian software packages discussed in the introduction do not implement
-% the variational message passing algorithm,
-
-%* compiled
-
-%* non-conjugate
-
-%* other engines
-
-%* open source
-
-%* advanced
-
-
-%* dynamic nodes
-
-% \begin{figure}
-%   \centering
-%   \begin{tikzpicture}
-%     \node [obs] (yn) {$y_n$};
-%     \node [latent, above left=of yn] (mu) {$\mu$};
-%     \node [latent, above right=of yn] (tau) {$\tau$};
-
-%     \edge {mu, tau} {yn};
-
-%     \tikzstyle{plate caption} = [caption, node distance=0, inner sep=0pt,
-%     below=5pt of #1.south]
-
-%     \plate {} {(yn)} {$n=1,\ldots,10$};
-%   \end{tikzpicture}
-%   \caption{Graphical model of the example problem.}
-%   \label{fig:graphical_model}
-% \end{figure}
-% In order to demonstrate BayesPy, this section solves an extremely simple problem
-% but which includes the main steps of using BayesPy.  The task is to estimate the
-% unknown mean and precision parameters of a Gaussian distribution given ten
-% observations.  Thus, the likelihood function is Gaussian:
-% \begin{align*}
-%   p(y_1,\ldots,y_{10}|\mu,\tau) &= \prod^{10}_{n=1}\mathcal{N}(y_n | \mu, \tau),
-% \end{align*}
-% where the Gaussian distribution is parameterized by precision instead of
-% variance.  The unknown mean $\mu$ and precision $\tau$ are given broad Gaussian
-% and gamma priors, respectively:
-% \begin{align*}
-%   p(\mu) &= \mathcal{N}(\mu|0, 10^{-6}), & p(\tau) &= \mathcal{G}(\tau|10^{-6},
-%   10^{-6}).
-% \end{align*}
-% Figure~\ref{fig:graphical_model} shows the graphical model of this simple model.
-% The model is constructed in BayesPy by creating nodes:
-% \begin{lstlisting}
-% from bayespy.nodes import GaussianARD, Gamma
-% mu = GaussianARD(0, 1e-6)
-% tau = Gamma(1e-6, 1e-6)
-% \end{lstlisting}
-% These two nodes represent the two unknown variables that we are interested in.
-% They are the parameters of the Gaussian distribution of the observed variable:
-% \begin{lstlisting}
-% y = GaussianARD(mu, tau, plates=(10,))
-% \end{lstlisting}
-% The number of observations is given as plates which define the number of
-% repetitions.  Note that the syntax of the model construction is similar to the
-% mathematical formulation which defines the conditional distributions for each
-% variable.  Thus, it is easy to understand the model from the Python code.  After
-% the model has been constructed, some nodes are marked as observed and given
-% data:
-% \begin{lstlisting}
-% y.observe([4.5, 3.9, 6.3, 5.6, 4.9, 2.8, 7.4, 6.1, 4.8, 2.1])
-% \end{lstlisting}
-% Next, we want to find the posterior approximation for our latent variables.  We
-% create the VB inference engine:
-% \begin{lstlisting}
-% from bayespy.inference import VB
-% Q = VB(y, mu, tau)
-% \end{lstlisting}
-% The inference engine takes all the stochastic nodes of the model as input.  The
-% message passing algorithm can be run by calling \texttt{update} method:
-% \begin{lstlisting}
-% Q.update(repeat=100)
-% \end{lstlisting}
-% The algorithm is run for 100 iterations or until it converges.  In this case,
-% the algorithm converges in four iterations.  The posterior approximation can be
-% examined, for instance, by plotting the probability density functions of the
-% latent variables:
-% \begin{lstlisting}
-% import bayespy.plot as bpplt
-% import numpy as np
-% bpplt.pyplot.figure()
-% bpplt.pdf(Q[mu], np.linspace(0, 10, num=300))
-% bpplt.pyplot.figure()
-% bpplt.pdf(Q[tau], np.linspace(0, 2, num=300))
-% bpplt.pyplot.show()
-% \end{lstlisting}
-% Figure~\ref{fig:posterior} shows the resulting approximate posterior
-% distributions.  The module \texttt{bayespy.plot} contains functions for simple
-% plotting tasks, such as plotting the probability density function or the Hinton
-% diagram of a variable.  Note that the standard \texttt{pyplot} module of
-% Matplotlib is available at the \texttt{plot} module of BayesPy.
-% \begin{figure}
-%   \begin{center}
-%     \begin{subfigure}[b]{0.4\textwidth}
-%       \includegraphics[width=\textwidth]{fig_mu}
-%       \caption{$q(\mu)$}
-%     \end{subfigure}
-%     \begin{subfigure}[b]{0.4\textwidth}
-%       \includegraphics[width=\textwidth]{fig_tau}
-%       \caption{$q(\tau)$}
-%     \end{subfigure}
-%   \end{center}
-%   \caption{The posterior approximations of $\mu$ and $\tau$.}
-%   \label{fig:posterior}
-% \end{figure}
-
 \section{Conclusions}
 
 BayesPy provides a simple and efficient way to construct conjugate exponential
@@ -481,7 +378,7 @@ Python.
 %
 In addition to the standard variational message passing, it supports several
 advanced methods such as stochastic and collapsed variational inference.  Future
-plans include support for non-conjugate models and non-parametric nodes (e.g.,
+plans include support for non-conjugate models and non-parametric models (e.g.,
 Gaussian and Dirichlet processes).
 % Future plans for BayesPy include implementing more inference engines (e.g.,
 % maximum likelihood, expectation propagation and Gibbs sampling), improving the
@@ -498,6 +395,7 @@ Gaussian and Dirichlet processes).
 
 
 \vskip 0.2in
+\small
 \bibliography{bibliography/bibliography.bib}
 
 \end{document}

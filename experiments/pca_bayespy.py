@@ -1,24 +1,7 @@
 ######################################################################
-# Copyright (C) 2011-2015 Jaakko Luttinen
+# Copyright (C) 2015 Jaakko Luttinen
 #
-# This file is licensed under Version 3.0 of the GNU General Public
-# License. See LICENSE for a text of the license.
-######################################################################
-
-######################################################################
-# This file is part of BayesPy.
-#
-# BayesPy is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License version 3 as
-# published by the Free Software Foundation.
-#
-# BayesPy is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with BayesPy.  If not, see <http://www.gnu.org/licenses/>.
+# MIT License
 ######################################################################
 
 
@@ -39,42 +22,17 @@ import bayespy.plot as bpplt
 def model(M, N, D):
     # Construct the PCA model with ARD
 
-    if True:
-        # ARD covariance
-        alpha = nodes.Gamma(1e-2,
-                            1e-2,
-                            plates=(D,),
-                            name='alpha')
-        # Loadings
-        W = nodes.GaussianARD(0,
-                              alpha,
-                              shape=(D,),
-                              plates=(M,1),
-                              name='W')
-    elif True:
-
-        # Full covariance
-        alpha = nodes.Wishart(D,
-                              D*np.identity(D),
-                              name='alpha')
-
-        # Loadings
-        W = nodes.Gaussian(np.zeros(D),
-                           alpha,
-                           plates=(M,1),
-                           name='W')
-    else:
-        # Constant covariance
-
-        # Dummy node
-        alpha = nodes.Bernoulli(0.5, name='alpha')
-
-        # Loadings
-        W = nodes.GaussianARD(0,
-                              1,
-                              shape=(D,),
-                              plates=(M,1),
-                              name='W')
+    # ARD covariance
+    alpha = nodes.Gamma(1e-2,
+                        1e-2,
+                        plates=(D,),
+                        name='alpha')
+    # Loadings
+    W = nodes.GaussianARD(0,
+                          alpha,
+                          shape=(D,),
+                          plates=(M,1),
+                          name='W')
 
     # States
     X = nodes.GaussianARD(0,
@@ -104,11 +62,6 @@ def model(M, N, D):
 
 def generate_data(M, N, D, seed=1):
     np.random.seed(seed)
-    #U = np.linalg.qr(np.random.randn(M,M))[0]
-    #V = np.linalg.qr(np.random.randn(N,N))[0]
-    #S = np.eye(M, N)
-    #S[:D,:D] *= np.linspace(8, 8, D) #(1 + np.arange(D))
-    #y = np.dot(U, np.dot(S, V))
     W = np.random.randn(M, D) / D
     X = np.random.randn(D, N)
     y = np.dot(W, X) + 0.3*np.random.randn(M, N)
@@ -137,21 +90,11 @@ def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
     Q['Y'].observe(y)
 
     # Run inference algorithm
-    if rotate:
-        # Use rotations to speed up learning
-        rotW = transformations.RotateGaussianARD(W, alpha)
-        rotX = transformations.RotateGaussianARD(X)
-        R = transformations.RotationOptimizer(rotW, rotX, D)
-        Q.set_callback(R.rotate)
-            
-    # Use standard VB-EM alone
     print("Running inference...")
     Q.update(repeat=maxiter, tol=0)
 
     v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
     np.savetxt("pca-results-%02d-bayespy.csv" % seed, v, delimiter=",")
-
-    print(Q['tau'])
 
 
 if __name__ == '__main__':

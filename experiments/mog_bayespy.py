@@ -1,24 +1,7 @@
 ######################################################################
-# Copyright (C) 2011-2015 Jaakko Luttinen
+# Copyright (C) 2015 Jaakko Luttinen
 #
-# This file is licensed under Version 3.0 of the GNU General Public
-# License. See LICENSE for a text of the license.
-######################################################################
-
-######################################################################
-# This file is part of BayesPy.
-#
-# BayesPy is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License version 3 as
-# published by the Free Software Foundation.
-#
-# BayesPy is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with BayesPy.  If not, see <http://www.gnu.org/licenses/>.
+# MIT License
 ######################################################################
 
 import os
@@ -85,9 +68,6 @@ def generate_data(N, D, K, seed=1, spread=3):
 
     np.savetxt('mog-data-%02d.csv' % seed, y, delimiter=',', fmt='%f')
 
-    #plt.plot(y[:,0], y[:,1], 'rx')
-    #plt.show()
-
     return y
 
 
@@ -113,9 +93,6 @@ def run(N=2000, D=3, K=20, seed=1, maxiter=200, spread=3.0):
     # Run inference
     print("Running inference...")
     Q.update(repeat=maxiter, tol=-1e-6)
-
-    print(Q['alpha'])
-    #print(Q['mu'])
 
     v = np.array([Q.L[:(Q.iter+1)], Q.cputime[:(Q.iter+1)]]).T
     np.savetxt("mog-results-%02d-bayespy.csv" % seed, v, delimiter=",")

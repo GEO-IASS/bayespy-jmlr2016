@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) 2015 Jaakko Luttinen
+// MIT License
+
+using System;
 using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -91,7 +94,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 var ZtimesW = Variable.MatrixMultiply(W, Z).Named("Z*W");
 
                 // Observation noise
-                //pi = Variable.Array<double>(r
                 tau = Variable.GammaFromShapeAndRate(0.01, 0.01);
 
                 // Observations
@@ -124,7 +126,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 return Distribution<double>.Array(array);
             }
     }
-//*/
 
     public class BayesianPCAModel_Full : BayesianPCAModel
     {
@@ -186,8 +187,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                                                          PositiveDefiniteMatrix.IdentityScaledBy(D, 0.5*D));
                 // Mixing matrix
                 W = Variable.Array<Vector>(rM).Named("W");
-                //W[rM] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(D),
-                //                                                    PositiveDefiniteMatrix.Identity(D)).ForEach(rM);
                 W[rM] = Variable.VectorGaussianFromMeanAndPrecision(Vector.Zero(D),
                                                                     Alpha).ForEach(rM);
 
@@ -289,14 +288,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 {
                     starttime = get_cputime();
                     bpca.update();
-                    /*
-                    bpca.engine.NumberOfIterations = j+1;
-                    // Infer the marginals
-                    //bpca.engine.Infer(bpca.Alpha);
-                    bpca.engine.Infer(bpca.W);
-                    bpca.engine.Infer(bpca.Z);
-                    bpca.engine.Infer(bpca.tau);
-                    //*/
                     // Measure CPU time
                     endtime = get_cputime();
                     cputime.Add((endtime - starttime) / 1000.0);
@@ -313,9 +304,6 @@ namespace MicrosoftResearch.Infer.Tutorials
                 SaveResults(string.Format("pca-results-{0:00}-infernet.csv", seed),
                             loglike.ToArray(), cputime.ToArray());
                 
-                //Console.WriteLine("q(W) =\n" + bpca.engine.Infer(bpca.W));
-                //Console.WriteLine("q(X) =\n" + bpca.engine.Infer(bpca.Z));
-                //Console.WriteLine("q(tau) =\n" + bpca.engine.Infer(bpca.tau));
                 bpca.print();
 
             }

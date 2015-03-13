@@ -1,3 +1,10 @@
+######################################################################
+# Copyright (C) 2015 Jaakko Luttinen
+#
+# MIT License
+######################################################################
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 

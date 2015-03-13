@@ -15,9 +15,26 @@ BayesPy: Variational Bayesian Inference in Python}
 
 \section{Responses to the Reviewers of Submission 14-324 (v1)}
 
-I would like to thank..
+I want to express my gratitude to the action editor and all three reviewers for
+their in-depth evaluation and constructive comments.  I have taken into account
+the reviews and revised the paper.  In addition, I have added some new features
+to BayesPy and released a new version (0.3.1).  The four major changes in this
+revised submission can be listed as:
+\begin{itemize}
 
-added features etc
+\item BayesPy now supports several advanced VB techniques: stochastic
+  variational inference, collapsed inference, Riemannian conjugate gradient
+  learning, pattern searches and deterministic annealing.
+
+\item The extremely simple example in the previous submission has been replaced
+  by a Gaussian mixture model example.
+
+\item A detailed comparison to Infer.NET has been added.
+
+\item The reported installation issues have been fixed.
+
+\end{itemize}
+More detailed responses for each reviewer are given below.
 
 
 % \subsection{Decision (meta-review)}
@@ -33,15 +50,44 @@ added features etc
 
 \begin{itemize}
 
-\item \underline{syntax}\\
-  yeah yeah
+\item \underline{syntax}
+  \\
+  The API in the online documentation (bayespy.org) provides details about the
+  syntax for nodes and methods.  For instance, more details about the syntax of
+  the gating node has been added in the documentation.  However, it is typically
+  better to use Mixture node directly to achieve mixture distributions, as shown
+  in the example in section 3.
 
-\item \underline{speed comparison}\\
-  ooh yeeeeah
+\item \underline{speed comparison}
+  \\
+  The revised version contains a more detailed comparison with Infer.NET.  The
+  other relevant active packages are basically MCMC packages.  Because it is not
+  obvious how to weigh different aspects of MCMC and VB methods in general, a
+  comparison with the MCMC packages is out of the scope of this paper.  However,
+  because Infer.NET seems to offer practically the same functionality, section 4
+  provides a detailed comparison between BayesPy and Infer.NET, including a
+  speed comparison.
 
-\item \underline{supported models}\\
+\item \underline{supported models}
+  \\
+  The revised version makes it more clear that BayesPy supports conjugate
+  exponential family models and does not currently support non-conjugate models.
+  An example of a non-supported model is given in section 4.  Examples of
+  supported popular models are listed in section 2.  Section 3 also provides an
+  example implementation of a Gaussian mixture model, which is much more
+  interesting model than the very simple model in the previous version of the
+  paper.  Because of the page limit, more examples are provided in the online
+  documentation.  Section 4 also discusses Gaussian mixture and PCA models,
+  which are given implementations in the supplementary material.  The results in
+  the section also provide some rough idea about computational costs and how
+  large models can be constructed without using stochastic variational
+  inference.
 
-\item \underline{scheduling}\\
+\item \underline{scheduling}
+  \\
+  The updates (and all computations) are performed sequentially, that is,
+  variables are updated in turns.  This is now mentioned in Section 3.  Parallel
+  computing is not supported.
 
 \end{itemize}
 
@@ -49,17 +95,52 @@ added features etc
 
 \begin{itemize}
 
-\item \underline{installation instructions}\\
+\item \underline{installation}
+  \\
+  The installation instructions in the online documentation (bayespy.org) have
+  been improved.  Because BayesPy itself is written purely in Python and thus
+  does not need compiling, the only challenge is in installing the requirements
+  (a recent NumPy stack).  In order to make the installation of the NumPy stack
+  much easier, the instructions mention the possibility to use pre-built
+  versions of the NumPy stack (e.g., Anaconda or Enthought).  This is quite
+  close to having a stand-alone executable as suggested.
 
-\item \underline{user community}\\
+  The reviewer was not able to use the package because the execution halted.
+  This was caused by an unfortunate regression bug in matplotlib 1.4.0 and a
+  workaround for it in BayesPy.  These issues have now been fixed.  I want to
+  thank the reviewer for reporting the bug.
+
+  The error in the second installation seems to be caused by a server error in
+  PyPI website (or altenatively some issue in matplotlib), according to my
+  understanding.  I hope the reviewer does not experience this issue anymore.
+
+\item \underline{section headings}
+  \\
+  Section 2 is now labelled ``Features''.
+
+\item \underline{user community}
+  \\
+  It is difficult to give any accurate estimates of the size of the user
+  community.  However, based on given stars, the number of forks and reported
+  issues on Github, there seems to be interested users.  In addition, the number
+  of downloads in pypi.org and mloss.org give some idea about the number of
+  users.
 
 \item \underline{speed comparison}
+  \\
+  The revised version contains a more detailed comparison with Infer.NET.  The
+  other relevant active packages are basically MCMC packages.  It is not obvious
+  how to weigh different aspects of MCMC and VB methods in general, thus a
+  comparison to the MCMC packages is out of the scope of this paper.  However,
+  because Infer.NET seems to offer practically the same functionality, section 4
+  provides a detailed comparison between BayesPy and Infer.NET, including a
+  speed comparison.
 
 \end{itemize}
 
 \subsection{Reviewer 3}
 
-Reviewer 3 did not point out any BLAH BLAH BLAH
+Reviewer 3 did not point out any modifications the author should make.
 
 
 \end{document}
