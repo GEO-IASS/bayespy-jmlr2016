@@ -18,7 +18,7 @@ BayesPy: Variational Bayesian Inference in Python}
 I want to express my gratitude to the action editor and all three reviewers for
 their in-depth evaluation and constructive comments.  I have taken into account
 the reviews and revised the paper.  In addition, I have added some new features
-to BayesPy and released a new version (0.3.1).  The four major changes in this
+to BayesPy and released a new version (0.3.2).  The four major changes in this
 revised submission can be listed as:
 \begin{itemize}
 
@@ -60,10 +60,10 @@ More detailed responses for each reviewer are given below.
   interesting model than the very simple model in the previous version of the
   paper.  Because of the page limit, more examples are provided in the online
   documentation (bayespy.org).  Section 4 also discusses Gaussian mixture and
-  PCA models, which are given implementations in the supplementary material.
-  The results in the section also provide some rough idea about computational
-  costs and how large models can be constructed without using stochastic
-  variational inference.
+  PCA models, for which implementations are given in the supplementary material.
+  The results in section 4 also provide some rough idea about computational
+  costs and how large models can be constructed (if not using stochastic
+  variational inference).
 
 \item \underline{speed comparison}
   \\
@@ -114,6 +114,12 @@ More detailed responses for each reviewer are given below.
   PyPI website (or altenatively some issue in matplotlib), according to my
   understanding.  I hope the reviewer does not experience this issue anymore.
 
+  Unfortunately, a current bug in Pip or H5py causes some issues to the
+  installation but a simple workaround is to install some of the required
+  packages manually (see \url{https://github.com/bayespy/bayespy/issues/14}).
+  The documentation also suggests installing required packages manually if
+  \texttt{pip install bayespy} fails.
+
 \item \underline{speed comparison}
   \\
   The revised version contains a more detailed comparison with Infer.NET.  The
@@ -140,7 +146,7 @@ More detailed responses for each reviewer are given below.
 
 \subsection{Reviewer 3}
 
-Reviewer 3 did not point out any modifications the author should make.
+Reviewer 3 did not request any modifications.
 
 
 \end{document}

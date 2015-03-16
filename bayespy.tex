@@ -130,7 +130,7 @@ is no longer actively developed.  VIBES has been replaced by Infer.NET, which
 is partly closed source and licensed for non-commercial use only.  Instead of VB
 inference, mainly MCMC is supported by other projects such as PyMC \citep{PyMC},
 OpenBUGS \citep{OpenBUGS}, Dimple \citep{Dimple} and Stan \citep{Stan}.  Thus,
-there is a need for an open source and maintained VB software package.
+there is a need for an open-source and maintained VB software package.
 
 
 
@@ -311,9 +311,9 @@ This section provides a brief comparison with Infer.NET because it is another
 active project implementing the variational message passing algorithm, whereas
 the other related active projects implement MCMC.  The main advantages of
 Infer.NET over BayesPy are its support for non-conjugate models (e.g., logistic
-regression) and other inference engines.  On the other hand, BayesPy is
-open-source software and supports several advanced VB methods (e.g., stochastic
-variational inference and collapsed inference).
+regression) and other inference engines (EP and Gibbs sampling).  On the other
+hand, BayesPy is open-source software and supports several advanced VB methods
+(e.g., stochastic variational inference and collapsed inference).
 
 
 The speed of the packages were compared by using two widely used models: a
@@ -342,9 +342,9 @@ libraries for fast numerical operations.\footnote{Assuming that NumPy uses
   BLAS/LAPACK because BayesPy uses NumPy for numerical operations.}  In
 addition, if using multi-threaded BLAS and LAPACK on a multi-core computer, the
 difference in wall-clock time can be even larger than in CPU time.  The speed of
-BayesPy for these models could potentially be improved by using collapsed or
-stochastic variational inference.  The accuracy could be improved by using
-Gaussian-Wishart nodes which do not factorize with respect to the Gaussian and
+BayesPy for these models might be improved by using collapsed or stochastic
+variational inference.  The accuracy of BayesPy could be improved by using a
+Gaussian-Wishart node, which does not factorize with respect to the Gaussian and
 Wishart variables.
 
 \begin{table}[tb]
