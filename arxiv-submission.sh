@@ -2,7 +2,7 @@
 
 SOURCE=bayespy
 TARGET=bayespy-arxiv
-SUPP='tikzlibrarybayesnet.code.tex fig_*.pdf jmlr2e.sty'
+SUPP='jmlr2e.sty'
 
 # Remove comments with:
 perl -pe 's/(^|[^\\])%.*/\1%/' < $SOURCE.tex > tmp.tex 
