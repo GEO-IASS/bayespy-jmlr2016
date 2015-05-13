@@ -1,0 +1,41 @@
+As you can see from the reviews we are almost there in terms of acceptance. The
+tidying up required (minor revision) is to: resolve the different factorisation
+issue (reviewer 1), make the typographic changes suggested in the linked pdf
+file and ensure that the install is smooth as suggested by reviewer 2.
+
+So, well done for improving the first version to this point, I am confident that
+you will be able to address the minor issues fairly rapidly.
+
+
+REVIEWER 1
+==========
+
+The new manuscript is improved, although still not perfect.  It has addressed
+the lack of comparison to other systems by giving the performance of the system
+on two standard models compared to Infer.NET.  It is not clear why the authors
+used different factorisations for the Infer.NET models in this comparison, since
+this allows one system to use efficient matrix operations whilst the other
+cannot.  This could be having a significant effect on computation time.
+
+A real world example and a more complete list of the supported nodes are still
+lacking, but at least the reader can get some sense of what can be done with the
+system and how quickly.
+
+Overall, it's a better manuscript, and probably just good enough for acceptance.
+I do still feel that there is room for improvement and would like the
+different-factorisation issue to be addressed before publication.
+
+
+
+REVIEWER 3
+==========
+
+The revision is improved. Here is an edited version with only a few language
+suggestions:
+
+https://www.dropbox.com/s/o999unfjmwgycip/JMLR-14-324-2.pdf?dl=0
+
+One minor software issue: the example in the manuscript fails at the plotting
+step (line 18) when using either the pip version or the current Github source. I
+recommend making the entire example compatible with the current version
+installed by pip.
