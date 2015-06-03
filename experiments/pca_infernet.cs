@@ -38,6 +38,7 @@ namespace MicrosoftResearch.Infer.Tutorials
         public VariableArray2D<double> W = null;
         public VariableArray2D<double> Z = null;
         public Variable<double> tau = null;
+        //public VariableArray2D<double> tau = null;
         public VariableArray<double> Alpha = null;
         public Range rN = null;
         public Range rD = null;
@@ -95,10 +96,35 @@ namespace MicrosoftResearch.Infer.Tutorials
 
                 // Observation noise
                 tau = Variable.GammaFromShapeAndRate(0.01, 0.01);
+                //tau = Variable.Array<double>(rM, rN).Named("Tau");
+                //tau[rM,rN] = Variable.GammaFromShapeAndRate(0.01, 0.01).ForEach(rM, rN);
 
                 // Observations
                 data = Variable.Array<double>(rM, rN).Named("Y");
+                /*
+                // Handle missing values
+                bool[,] isMissing = new bool[M,N];
+                for (int i=0; i<M; i++)
+                {
+                    for (int j=0; i<N; i++)
+                    {
+                        isMissing[i,j] = ((i+j) % 2)==0;
+                    }
+                }
+                VariableArray2D<bool> isMissingVar = Variable.Observed<bool>(isMissing, rM, rN);
+                using (Variable.ForEach(rM))
+                {
+                    using (Variable.ForEach(rN))
+                    {
+                        using (Variable.IfNot(isMissingVar[rM,rN]))
+                        {
+                            data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZtimesW[rM, rN], tau);
+                        }
+                    }
+                }
+                //*/
                 data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZtimesW[rM, rN], tau);
+                //data[rM, rN] = Variable.GaussianFromMeanAndPrecision(ZtimesW[rM, rN], tau[rM, rN]);
 
                 // End evidence/lowerbound block
                 block.CloseBlock();

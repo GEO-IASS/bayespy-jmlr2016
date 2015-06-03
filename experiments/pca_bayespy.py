@@ -77,7 +77,7 @@ def plot(seed=1, maxiter=None):
     utils.plot('pca', seed, maxiter=maxiter)
 
 
-def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
+def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False, disable_broadcasting=False):
 
     # Generate data
     print("Generating data...")
@@ -87,7 +87,10 @@ def run(M=100, N=1000, D=10, seed=42, rotate=False, maxiter=200, debug=False):
     Q = model(M, N, D)
 
     # Observe data
-    Q['Y'].observe(y)
+    if disable_broadcasting:
+        Q['Y'].observe(y, mask=np.ones((M,N), dtype=np.bool))
+    else:
+        Q['Y'].observe(y)
 
     # Run inference algorithm
     print("Running inference...")
@@ -107,6 +110,7 @@ if __name__ == '__main__':
                                     "d=",
                                     "seed=",
                                     "maxiter=",
+                                    "disable-broadcasting",
                                     "debug",
                                     "rotate"])
     except getopt.GetoptError:
@@ -117,6 +121,7 @@ if __name__ == '__main__':
         print('--rotate         Apply speed-up rotations')
         print('--maxiter=<INT>  Maximum number of VB iterations')
         print('--seed=<INT>     Seed (integer) for the random number generator')
+        print('--disable-broadcasting Do not utilize broadcasting')
         print('--debug          Check that the rotations are implemented correctly')
         sys.exit(2)
 
@@ -128,6 +133,8 @@ if __name__ == '__main__':
             kwargs["maxiter"] = int(arg)
         elif opt == "--debug":
             kwargs["debug"] = True
+        elif opt == "--disable-broadcasting":
+            kwargs["disable_broadcasting"] = True
         elif opt == "--seed":
             kwargs["seed"] = int(arg)
         elif opt in ("--m",):
