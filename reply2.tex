@@ -1,0 +1,59 @@
+\documentclass{article}
+
+\usepackage{url}
+
+\title{Review Reply to JMLR Machine Learning Open Source Software Submission (14-324):\\
+BayesPy: Variational Bayesian Inference in Python}
+
+\author{Jaakko Luttinen\\
+  \url{jaakko.luttinen@aalto.fi}\\
+    Aalto University, Finland}
+
+\begin{document}
+
+\maketitle
+
+\section{Responses to the Reviewers of Submission 14-324 (v2)}
+
+Again, I want to express my gratitude to the action editor and the reviewers for
+their evaluation and comments.  I have taken into account the reviews and made a
+minor revision.  In addition, I have switched to a more permissive license, that
+is, from GPLv3 to MIT and released a new version (0.3.3).  Below are my comments
+to the issues listed by the action editor:
+
+\begin{itemize}
+
+\item \underline{resolve the different factorisation}
+
+  In the comparison to Infer.NET, I have now also used the same factorization
+  for Infer.NET as for BayesPy.  This was not presented previously for a fair
+  comparison because Infer.NET was performing extremely badly with the
+  factorization used in BayesPy.  Perhaps, Infer.NET is optimized for the full
+  factorization.  In any case, the results now summarize both the full
+  factorization and the other factorization for Infer.NET.  In addition, because
+  of some other updates to BayesPy, the experiments were run again, thus the
+  results slightly differ from the previous results.
+
+
+\item \underline{make the typographic changes}
+
+  I thank for the language suggestions.  I have made the suggested typographic
+  changes.
+  
+
+\item \underline{ensure that the install is smooth}
+
+  I have now checked that the example in the paper works with the latest release
+  in PyPI and the development version in GitHub.
+
+  
+\end{itemize}
+
+\end{document}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-PDF-mode: t
+%%% TeX-master: t
+%%% End: 
