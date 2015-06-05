@@ -88,7 +88,8 @@
   task of implementing the variational Bayesian update equations, the user can
   construct models faster and in a less error-prone way.  Simple syntax,
   flexible model construction and efficient inference make BayesPy suitable for
-  both average and expert Bayesian users.
+  both average and expert Bayesian users.  It also supports some advanced
+  methods such as stochastic and collapsed variational inference.
 \end{abstract}
 
 \begin{keywords}
@@ -115,8 +116,7 @@ simple message passing protocol \citep{Winn:2005}.  This enables implementation
 of small general nodes that can be used as building blocks for large complex
 models.  BayesPy offers a comprehensive collection of built-in nodes that can be
 used to build a wide range of models and a simple interface for implementing
-custom nodes.  The package is released under the GNU General Public License v3.0
-(GPLv3).
+custom nodes.  The package is released under the MIT license.
 
 
 Several other projects have similar goals for making Bayesian inference easier
@@ -140,9 +140,9 @@ there is a need for an open-source and maintained VB software package.
 BayesPy can be used to construct conjugate exponential family models.  The
 documentation provides detailed examples of how to construct a variety of
 models, including principal component analysis models, linear state-space
-models, mixture models and hidden Markov models.  In addition, BayesPy has been
-used in two publications about parameter expansion and time-varying dynamics for
-linear state-space models \citep{Luttinen:2013,Luttinen:2014}.
+models, mixture models and hidden Markov models.  BayesPy has also been used in
+two publications about parameter expansion and time-varying dynamics for linear
+state-space models \citep{Luttinen:2013,Luttinen:2014}.
 % , which show that it is applicable to large complex models requiring efficient
 % inference.
 
@@ -252,7 +252,7 @@ from bayespy import nodes
 mu = nodes.Gaussian(np.zeros(D), 0.01*np.identity(D), plates=(K,))
 Lambda = nodes.Wishart(D, D*np.identity(D), plates=(K,))
 \end{lstlisting}
-The \texttt{plates} keyword argument is used to define repetitions similarly as
+The \texttt{plates} keyword argument is used to define repetitions similarly to
 the plate notation in graphical models.  The cluster assignments are categorical
 variables, and the cluster probabilities are given a Dirichlet prior
 distribution:
@@ -319,37 +319,36 @@ hand, BayesPy is open-source software and supports several advanced VB methods
 The speed of the packages were compared by using two widely used models: a
 Gaussian mixture model (GMM) and principal component analysis
 (PCA).\footnote{The scripts for running the experiments are available as
-  supplementary material.}  Both models were run for small and large
-artificially generated datasets.  For GMM, the small model used 10 clusters for
-200 observations with 2 dimensions, and the large model used 40 clusters for
-2000 observations with 10 dimensions.  For PCA, the small model used
-10-dimensional latent space for 500 observations with 20 dimensions, and the
-large model used 40-dimensional latent space for 2000 observations with 100
-dimensions.
-For the PCA model, Infer.NET used a fully factorizing approximation and also
-similarly to BayesPy an approximation which did not factorize with respect to
-the latent space dimensions.
+  supplementary material.}  Both models were run for small and large artificial
+datasets.  For GMM, the small model used 10 clusters for 200 observations with 2
+dimensions, and the large model used 40 clusters for 2000 observations with 10
+dimensions.  For PCA, the small model used 10-dimensional latent space for 500
+observations with 20 dimensions, and the large model used 40-dimensional latent
+space for 2000 observations with 100 dimensions.  For the PCA model, Infer.NET
+used both a fully factorizing approximation and also the same approximation as
+in BayesPy which did not factorize with respect to the latent space dimensions.
 %Infer.NET used a fully factorizing approximation for the PCA model,
 %whereas BayesPy did not factorize with respect to the latent space dimensions.  
-The experiments were run on a Linux computer with a quad-core processor
-(i7-4702MQ).  Because the packages run practically identical algorithms and thus
+The experiments were run on a quad-core (i7-4702MQ) Linux computer.
+% with a quad-core processor (i7-4702MQ).
+Because the packages run practically identical algorithms and thus
 converged to similar solutions in a similar number of iterations (50--100
 iterations depending on the dataset), we compared the average CPU time per
 iteration.
 
 
-The results are summarized in Table~\ref{tab:speed}.  For GMM, BayesPy is
-significantly faster, which is probably mostly explained by the fact that
-BayesPy uses highly optimized numerical libraries (BLAS and LAPACK).  For PCA,
-BayesPy automatically avoids redundant computations which arise because equal
-posterior covariance matrices are shared between latent variables.  This
-broadcasting makes BayesPy significantly faster than Infer.NET.  However,
-broadcasting is not always possible (e.g., if there are missing values in the
-PCA data), thus the table also presents the results when BayesPy is forced not
-to utilize broadcasting.  In that case, BayesPy is a few times slower than
-Infer.NET because Infer.NET uses a fully factorized approximation.  If Infer.NET
-uses similar factorization as BayesPy, Infer.NET may be orders of magnitude
-slower.
+The results are summarized in Table~\ref{tab:speed}.  For all datasets, BayesPy
+is faster probably because it uses highly optimized numerical libraries (BLAS
+and LAPACK).  For PCA, BayesPy also automatically avoids redundant computations
+which arise because latent variables have equal posterior covariance matrices.
+% This broadcasting makes BayesPy significantly faster than Infer.NET.
+However, such broadcasting is not always possible (e.g., if there are missing
+values in the PCA data).  Thus, the table also presents the results when BayesPy
+is forced to not use broadcasting: BayesPy is slower than Infer.NET on the
+smaller PCA dataset but faster on the larger PCA dataset.
+% Note that Infer.NET uses a fully factorized approximation.
+If Infer.NET used the same factorization for PCA as BayesPy, Infer.NET may be
+orders of magnitude slower.
 % On the smaller datasets,
 % Infer.NET is slightly faster because BayesPy has some Python overhead.  However,
 % the total CPU time for both methods is only a few seconds.  On the larger
@@ -358,17 +357,18 @@ slower.
 %   BLAS/LAPACK because BayesPy uses NumPy for numerical operations.}  In
 % addition, if using multi-threaded BLAS and LAPACK on a multi-core computer, the
 % difference in wall-clock time can be even larger than in CPU time.
-The speed of BayesPy for both models might be improved by using collapsed or
-stochastic variational inference.  The accuracy of BayesPy could be improved by
-using a Gaussian-Wishart node, which does not factorize with respect to the
-Gaussian and Wishart variables.
+%
+%The speed of BayesPy for both models might be improved by using collapsed or
+%stochastic variational inference.  The accuracy of BayesPy could be improved by
+%using a Gaussian-Wishart node, which does not factorize with respect to the
+%Gaussian and Wishart variables.
 
 \begin{table}[tb]
   \centering
   \caption{
-    The average CPU time (in milliseconds) per iteration for each
-    dataset.  The results in parentheses have the following meanings: a) BayesPy without utilizing
-    broadcasting. b) Infer.NET using an approximation factorized similarly as in
+    The average CPU time in milliseconds per iteration for each
+    dataset.  The results in parentheses have the following meanings: a) BayesPy without using
+    broadcasting. b) Infer.NET using the same factorization as in
     BayesPy.
   }
   \small
@@ -383,7 +383,7 @@ Gaussian and Wishart variables.
     Large PCA
     \\
     \hline
-    BayesPy     & 5 & 85  & 7 (74) & 360 (6\,200)
+    BayesPy     & 6 & 90  & 7 (60) & 400 (1\,500)
     \\
     Infer.NET   & 25 & 4\,600 & 37 (350) & 2\,200 (210\,000)
   \end{tabular}
