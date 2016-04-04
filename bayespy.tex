@@ -1,4 +1,4 @@
-\documentclass[twoside,11pt]{article}
+\documentclass[hidelinks,twoside,11pt]{article}
 
 % Any additional packages needed should be included after jmlr2e.
 % Note that jmlr2e.sty includes epsfig, amssymb, natbib and graphicx,
@@ -73,7 +73,7 @@
 
 \title{BayesPy: Variational Bayesian Inference in Python}
 
-\author{\name Jaakko Luttinen \email jaakko.luttinen@aalto.fi \\
+\author{\name Jaakko Luttinen \email jaakko.luttinen@iki.fi \\
        \addr Department of Computer Science\\
        Aalto University, Finland}
 
@@ -93,7 +93,7 @@
 \end{abstract}
 
 \begin{keywords}
-  Variational Bayes, probabilistic programming,
+  variational Bayes, probabilistic programming,
   %variational message passing,
   Python
 \end{keywords}
@@ -365,12 +365,6 @@ orders of magnitude slower.
 
 \begin{table}[tb]
   \centering
-  \caption{
-    The average CPU time in milliseconds per iteration for each
-    dataset.  The results in parentheses have the following meanings: a) BayesPy without using
-    broadcasting. b) Infer.NET using the same factorization as
-    BayesPy.
-  }
   \small
   \begin{tabular}{ccccc}
     &
@@ -387,6 +381,12 @@ orders of magnitude slower.
     \\
     Infer.NET   & 25 & 4\,600 & 37 (350) & 2\,200 (210\,000)
   \end{tabular}
+  \caption{
+    The average CPU time in milliseconds per iteration for each
+    dataset.  The results in parentheses have the following meanings: a) BayesPy without using
+    broadcasting. b) Infer.NET using the same factorization as
+    BayesPy.
+  }
   \label{tab:speed}
 \end{table}
 
